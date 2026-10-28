@@ -7,33 +7,33 @@
 ## 1. लोकल डेवलपमेंट कमांड्स (Local Run Commands)
 
 ### A. बैकएंड चलाना (FastAPI + Python)
-1. **डिपेंडेंसी इंस्टॉल करें (अगर पहली बार चला रहे हैं):**
+1. डिपेंडेंसी इंस्टॉल करें (अगर पहली बार चला रहे हैं):
    ```bash
    pip install -r requirements.txt
    ```
-2. **FastAPI सर्वर रन करें:**
+2. FastAPI सर्वर रन करें:
    ```bash
    python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
    ```
-   - **API बेस URL:** `http://127.0.0.1:8000`
-   - **Swagger इंटरएक्टिव डॉक्यूमेंटेशन:** `http://127.0.0.1:8000/docs`
-   - **हेल्थचेक:** `http://127.0.0.1:8000/health`
+   - API बेस URL: `http://127.0.0.1:8000`
+   - Swagger इंटरएक्टिव डॉक्यूमेंटेशन: `http://127.0.0.1:8000/docs`
+   - हेल्थचेक: `http://127.0.0.1:8000/health`
 
 ---
 
 ### B. फ्रंटएंड चलाना (Next.js 16 + React + TypeScript)
-1. **वेब डायरेक्टरी में जाएं और पैकेज इंस्टॉल करें (अगर पहली बार चला रहे हैं):**
+1. वेब डायरेक्टरी में जाएं और पैकेज इंस्टॉल करें (अगर पहली बार चला रहे हैं):
    ```bash
    cd web
    npm install
    ```
-2. **डेवलपमेंट सर्वर शुरू करें:**
+2. डेवलपमेंट सर्वर शुरू करें:
    ```bash
    npm run dev
    ```
-   - **डैशबोर्ड URL:** `http://localhost:3000`
+   - डैशबोर्ड URL: `http://localhost:3000`
 
-3. **प्रोडक्शन बिल्ड चेक करें:**
+3. प्रोडक्शन बिल्ड चेक करें:
    ```bash
    npm run build
    ```
@@ -80,21 +80,21 @@ docker compose down
 यह प्रोजेक्ट आधुनिक 2-टियर आर्किटेक्चर (Next.js Frontend + Python FastAPI Backend) पर बना है। इसे आप निम्नलिखित प्लेटफॉर्म्स पर आसानी से डिप्लॉय कर सकते हैं:
 
 ### विकल्प 1: Vercel + Render / Railway (सबसे आसान और मुफ़्त/सस्ता तरीका - Recommended)
-1. **Frontend (Vercel):**
+1. Frontend (Vercel):
    - [Vercel](https://vercel.com/) पर अपना GitHub रिपॉजिटरी कनेक्ट करें।
-   - **Root Directory:** `web` सेट करें।
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `.next`
-   - **Environment Variable:**
+   - Root Directory: `web` सेट करें।
+   - Build Command: `npm run build`
+   - Output Directory: `.next`
+   - Environment Variable:
      `NEXT_PUBLIC_API_BASE_URL=https://your-backend-url.onrender.com`
 
-2. **Backend (Render या Railway):**
+2. Backend (Render या Railway):
    - [Render](https://render.com/) पर "New Web Service" बनाएं।
    - अपना GitHub रिपॉजिटरी चुनें।
-   - **Environment:** `Python 3`
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - **Environment Variables:**
+   - Environment: `Python 3`
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - Environment Variables:
      - `STALL_ALERTER_API_KEY=your-secure-random-32char-key`
      - `DATABASE_PATH=stall_alerter.db` (या PostgreSQL URL)
 
@@ -153,7 +153,7 @@ Stall_Alert/
 ```
 
 ### स्ट्रक्चर पर समीक्षा (Verdict):
-- **मॉड्यूलर सेपरेशन:** बैकएंड (`app/`), फ्रंटेंड (`web/`), टेस्ट्स (`tests/`), और डॉक्यूमेंटेशन (`docs/`) स्पष्ट रूप से अलग-अलग हैं।
-- **सुरक्षा और स्वच्छता:** कोई सीक्रेट्स या हार्डकोडेड टोकन्स कमिट नहीं हैं, `.gitignore` ठीक से कॉन्फ़िगर है।
-- **कंटेनराइजेशन:** `Dockerfile` और `docker-compose.yml` पहले से मौजूद हैं।
-- **निष्कर्ष:** यह फ़ोल्डर स्ट्रक्चर पूरी तरह **इंडस्ट्री-स्टैंडर्ड और प्रोडक्शन-ग्रेड** है।
+- मॉड्यूलर सेपरेशन: बैकएंड (`app/`), फ्रंटेंड (`web/`), टेस्ट्स (`tests/`), और डॉक्यूमेंटेशन (`docs/`) स्पष्ट रूप से अलग-अलग हैं।
+- सुरक्षा और स्वच्छता: कोई सीक्रेट्स या हार्डकोडेड टोकन्स कमिट नहीं हैं, `.gitignore` ठीक से कॉन्फ़िगर है।
+- कंटेनराइजेशन: `Dockerfile` और `docker-compose.yml` पहले से मौजूद हैं।
+- निष्कर्ष: यह फ़ोल्डर स्ट्रक्चर पूरी तरह इंडस्ट्री-स्टैंडर्ड और प्रोडक्शन-ग्रेड है।
