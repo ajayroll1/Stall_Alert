@@ -19,6 +19,7 @@ import {
 import { AlertItem, AuditRecord, Candidate, FollowupAction, MetricSummary, SLARule } from "../types";
 
 export default function DashboardPage() {
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"alerts" | "candidates" | "drafts" | "rules" | "audit">("alerts");
   const [showTour, setShowTour] = useState<boolean>(false);
 
@@ -106,8 +107,15 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
+    setMounted(true);
     refreshAll();
   }, [statusFilter, severityFilter]);
+
+  if (!mounted) {
+    return (
+      <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-app, #faf9f6)" }} suppressHydrationWarning />
+    );
+  }
 
   const handleScan = async () => {
     setIsScanning(true);

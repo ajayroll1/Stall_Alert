@@ -694,6 +694,15 @@ def get_metrics(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     approved_actions = conn.execute("SELECT COUNT(*) FROM actions WHERE status = 'approved'").fetchone()[0]
     conn.close()
 
+    return {
+        "candidates_tracked": cand_count,
+        "open_alerts": total_alerts,
+        "critical_alerts": critical_alerts,
+        "high_alerts": high_alerts,
+        "pending_drafts": pending_actions,
+        "approved_drafts": approved_actions,
+    }
+
 # -----------------------------------------------------------------------------
 # Enterprise Integrations: ATS Webhooks & Notifications
 # -----------------------------------------------------------------------------
