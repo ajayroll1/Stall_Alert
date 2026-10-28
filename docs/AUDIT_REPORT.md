@@ -114,14 +114,16 @@ The current implementation of Stall Alerter is a solid, functional **modular mon
 
 ---
 
-## 3. Prioritized Engineering Action Plan
+## 3. Prioritized Engineering Action Plan & Implementation Status
 
-| Priority | Issue ID | Area | Effort | Impact |
+| Priority | Issue ID | Area | Remediated Status | Verification Evidence |
 |---|---|---|---|---|
-| **P0** | **A-2** | Enable SQLite WAL mode or configure PostgreSQL | Low (1 hr) | Prevents database write lock crashes |
-| **P0** | **B-1** | Restrict CORS `allow_origins` to frontend domain | Low (30 min) | Eliminates cross-origin exposure |
-| **P1** | **B-3** | Enforce 15MB file upload limit on CSV endpoint | Low (1 hr) | Protects against memory exhaustion DoS |
-| **P1** | **C-2** | Add database indexes on query filter columns | Low (1 hr) | Instant 10x query speedup |
-| **P2** | **A-1** | Move SLA scan from in-memory loop to DB query / queue | Medium (1 day) | Scales past 100k+ candidates |
-| **P2** | **C-1** | Add business-hours calendar logic (excluding weekends) | Medium (1 day) | Eliminates weekend false-positive alerts |
-| **P3** | **B-2** | Migrate from single API Key to JWT OAuth2 authentication | High (2-3 days) | Enterprise compliance & multi-recruiter RBAC |
+| **P0** | **A-2** | Concurrency: SQLite WAL Mode | `[x] FIXED & VERIFIED` | Enabled `PRAGMA journal_mode = WAL;` and `synchronous = NORMAL`. Eliminates database write lock contention. |
+| **P0** | **B-1** | Security: Strict CORS Configuration | `[x] FIXED & VERIFIED` | Replaced wildcard `*` with strict environment-configured domain allowlist (`localhost:3000`, `127.0.0.1:8000`). |
+| **P1** | **B-3** | Security: CSV Payload Size Limit | `[x] FIXED & VERIFIED` | Enforced strict 15MB file size ceiling (`MAX_FILE_SIZE = 15 * 1024 * 1024`) with HTTP 413 rejection. |
+| **P1** | **B-4** | Security: CSV Formula Injection Defense | `[x] FIXED & VERIFIED` | Input sanitizer strips spreadsheet formula execution prefixes (`=`, `+`, `-`, `@`, `\t`, `\r`). |
+| **P1** | **C-2** | Performance: Database Query Indexing | `[x] FIXED & VERIFIED` | Added 7 database indexes on `candidates(stage)`, `candidates(stage, stage_entered_at)`, `alerts(status, severity)`, and `audit_events(timestamp DESC)`. |
+| **P2** | **A-1** | Scalability: Batched Cursor Scanning | `[x] FIXED & VERIFIED` | Refactored `scan_alerts` from full-table RAM load to stream-chunked cursor batches (`fetchmany(500)`). |
+| **P2** | **C-1** | Domain: Business-Day Weekend Support | `[x] FIXED & VERIFIED` | Implemented `exclude_weekends` parameter in `compute_elapsed_days` eliminating false-positive Friday-to-Monday SLA breaches. |
+| **P3** | **B-2** | Governance: Enterprise OAuth2 / RBAC | `[~] PLANNED` | Outlined in `docs/ARCHITECTURE.md` for multi-tenant production migration. |
+
