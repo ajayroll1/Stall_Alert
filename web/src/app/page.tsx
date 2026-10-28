@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import FluidFooter from "../components/FluidFooter";
 import {
   fetchMetrics,
   fetchAlerts,
@@ -169,10 +170,16 @@ export default function DashboardPage() {
       {/* Top Header */}
       <header className="app-header">
         <div className="brand-container">
-          <div className="brand-logo-mark" aria-hidden="true">SA</div>
+          <img
+            src="/stall-logo.svg"
+            alt="Stall Alerter Logo"
+            width={34}
+            height={34}
+            className="header-logo-img"
+          />
           <div>
             <span className="brand-title">Stall Alerter</span>
-            <span className="brand-subtitle">React / Next.js Ops Console</span>
+            <span className="brand-subtitle">Pipeline Operations Console</span>
           </div>
         </div>
         <div className="header-actions">
@@ -610,6 +617,9 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Fluid Antigravity Dynamic Footer */}
+      <FluidFooter appName="Stall Alerter" tagline="Production Hiring Pipeline Monitoring & Recruiter Decision Support" />
 
       {/* Toast Notification Container */}
       <div className="toast-container">

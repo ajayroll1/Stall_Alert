@@ -496,3 +496,108 @@ table.ops-table tr:hover td {
   }
 }
 
+/* -----------------------------------------------------------------------------
+   Fluid Antigravity Dynamic Footer Styling
+   ----------------------------------------------------------------------------- */
+.fluid-footer-wrap {
+  position: relative;
+  background: linear-gradient(180deg, var(--bg-canvas) 0%, #11241f 100%);
+  margin-top: 4rem;
+  border-top: 1px solid var(--border-subtle);
+  overflow: hidden;
+  color: #e5e7eb;
+}
+
+.fluid-canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.fluid-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.fluid-footer-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 3rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.footer-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.footer-logo-img {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+  border-radius: 8px;
+}
+
+.footer-app-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.footer-tagline {
+  font-size: 0.8rem;
+  color: #9fb8ad;
+  margin-top: 0.15rem;
+}
+
+.footer-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-badge-list {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.footer-chip {
+  font-size: 0.72rem;
+  font-weight: 500;
+  background: rgba(30, 61, 52, 0.6);
+  border: 1px solid rgba(159, 184, 173, 0.3);
+  color: #d1fae5;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  backdrop-filter: blur(4px);
+}
+
+.footer-copy {
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.header-logo-img {
+  border-radius: 6px;
+  transition: transform 0.2s ease;
+}
+
+.header-logo-img:hover {
+  transform: scale(1.05);
+}
+
+

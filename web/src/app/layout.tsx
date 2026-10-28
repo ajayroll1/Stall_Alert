@@ -2,8 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Stall Alerter — Hiring Pipeline Operational Console (Next.js)",
+  title: "Stall Alerter — Hiring Pipeline Operational Console",
   description: "Production hiring pipeline stall detection, SLA monitoring, and recruiter decision support.",
+  icons: {
+    icon: "/stall-logo.svg",
+    shortcut: "/stall-logo.svg",
+    apple: "/stall-logo.svg",
+  },
 };
 
 export default function RootLayout({

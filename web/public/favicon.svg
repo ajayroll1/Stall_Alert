@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="stallGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3d34"/>
+      <stop offset="100%" stop-color="#0f211c"/>
+    </linearGradient>
+    <linearGradient id="alertGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#ef4444"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Hexagonal / Shield Base -->
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#stallGradient)" filter="url(#shadow)"/>
+  
+  <!-- Subtle inner border -->
+  <rect x="5.5" y="5.5" width="53" height="53" rx="12.5" fill="none" stroke="#2d574b" stroke-width="1.5"/>
+
+  <!-- Radar / Clock Hour Marks (Representing SLA / Stage Time Monitoring) -->
+  <circle cx="32" cy="32" r="18" fill="none" stroke="#3c6b5d" stroke-width="2" stroke-dasharray="3 3"/>
+  
+  <!-- Hour glass / Progress arc -->
+  <path d="M 32 14 A 18 18 0 0 1 50 32" fill="none" stroke="url(#alertGlow)" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Modern Bell / Alert Beacon with Pause / Stall Center -->
+  <!-- Alert Bell -->
+  <path d="M 32 19 C 27 19 24 23 24 28 C 24 34 21 36 21 38 L 43 38 C 43 36 40 34 40 28 C 40 23 37 19 32 19 Z" fill="#ffffff" filter="url(#shadow)"/>
+  
+  <!-- Bell Clapper / Pulse dot -->
+  <circle cx="32" cy="42" r="2.5" fill="#f59e0b"/>
+  <circle cx="32" cy="18" r="1.5" fill="#ffffff"/>
+
+  <!-- Stall Indicator inside bell: Clean dual vertical pause bars in deep green -->
+  <rect x="29" y="27" width="2" height="6" rx="1" fill="#1e3d34"/>
+  <rect x="33" y="27" width="2" height="6" rx="1" fill="#1e3d34"/>
+
+  <!-- Glowing Warning Dot on top right corner of bell -->
+  <circle cx="41" cy="22" r="3.5" fill="#ef4444" stroke="#ffffff" stroke-width="1.2"/>
+</svg>
