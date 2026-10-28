@@ -1,107 +1,83 @@
 "use client";
 
-import React, { useEffect, useState, useLayoutEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 export interface TourStep {
   targetId: string;
   tabTarget?: "alerts" | "candidates" | "drafts" | "rules" | "audit";
+  category: string;
   title: string;
-  badge: string;
   description: string;
-  keyPoints: string[];
-  preferredPlacement?: "bottom" | "top" | "center";
 }
 
 const TOUR_STEPS: TourStep[] = [
   {
-    targetId: "tour-step-scan-btn",
-    title: "1-Click Deterministic Stall Scan",
-    badge: "Step 1 of 7 • Engine Trigger",
+    targetId: "tour-target-metrics",
+    category: "Orientation & Executive Dashboard",
+    title: "Pipeline Operations Pulse",
     description:
-      "Initiates the deterministic background audit scan across every candidate application in the database, evaluating stage dwell time against SLA limits.",
-    keyPoints: [
-      "Calculates UTC elapsed days deterministically (zero AI hallucinations).",
-      "Creates new alerts or automatically auto-resolves candidates who advanced.",
-    ],
-    preferredPlacement: "bottom",
+      "Monitor total active candidates, open SLA alerts, and critical bottleneck warnings synchronized atomically with every ATS event and scan.",
   },
   {
-    targetId: "tour-target-metrics",
-    title: "Pipeline Operations Pulse",
-    badge: "Step 2 of 7 • Executive Overview",
+    targetId: "tour-step-scan-btn",
+    category: "Deterministic SLA Engine",
+    title: "Instant Dwell-Time Scan",
     description:
-      "Aggregated real-time metrics showing total tracked candidates, open overdue stalls, critical breaches (≥ 2.0x allowable limit), and pending outreach drafts.",
-    keyPoints: [
-      "Immediate detection of critical bottlenecks requiring recruiter intervention.",
-      "Live stats refresh automatically following scans, imports, and draft approvals.",
-    ],
-    preferredPlacement: "bottom",
+      "Execute instantaneous stall detection scans across all candidates with deterministic UTC math, avoiding LLM hallucinations.",
+  },
+  {
+    targetId: "tour-step-import-btn",
+    category: "Ingestion & Security Gateway",
+    title: "Candidate CSV Ingestion",
+    description:
+      "Import candidate batches with formula injection sanitization, idempotent external ID deduplication, and streaming parsing.",
   },
   {
     targetId: "tour-target-tabs",
-    title: "Workflow Navigation Center",
-    badge: "Step 3 of 7 • Domain Views",
+    category: "Navigation & Operations",
+    title: "Workflow Domain Switcher",
     description:
-      "Seamlessly toggle between operational workflows. Each view provides dedicated filters, custom pagination, and stateful tracking.",
-    keyPoints: [
-      "Overdue Alerts: Immediate triage and follow-up draft generation.",
-      "All Candidates: Comprehensive candidate search and stage tracking.",
-      "Follow-up Drafts: Human-in-the-Loop review and approval gateway.",
-      "SLA Rules & Audit: Dynamic policy customization and immutable audit trail.",
-    ],
-    preferredPlacement: "bottom",
+      "Seamlessly transition between Overdue Alerts, Candidate Directory, Human-in-the-Loop Approval Queue, SLA Rules, and Audit Logs.",
   },
   {
     targetId: "tour-target-alerts-toolbar",
     tabTarget: "alerts",
-    title: "Overdue Alerts Inbox & Filters",
-    badge: "Step 4 of 7 • Alerts Triage",
+    category: "Overdue Alerts Inbox",
+    title: "Multi-Dimensional Alert Filters",
     description:
-      "Triage overdue candidates categorized by severity (Critical, High, Medium), resolution state, and hiring stage with responsive pagination.",
-    keyPoints: [
-      "Filter by Critical (≥ 2x SLA), High (≥ 1.5x SLA), and Medium (≥ 1x SLA).",
-      "One-click 'Draft Follow-up' opens candidate re-engagement workflow.",
-    ],
-    preferredPlacement: "bottom",
+      "Filter overdue alerts by urgency (Critical ≥ 2x SLA, High ≥ 1.5x, Medium ≥ 1x), resolution state, and stage with responsive pagination.",
   },
   {
     targetId: "tour-target-candidates-toolbar",
     tabTarget: "candidates",
-    title: "Candidate Search & Pipeline Stage Filtering",
-    badge: "Step 5 of 7 • Talent Directory",
+    category: "Talent Directory",
+    title: "Fast Candidate Search & Stage Filtering",
     description:
-      "Search any candidate by full name, target role, or email, with dynamic stage filtering and paginated record navigation.",
-    keyPoints: [
-      "Fast client-side fuzzy search across all active job postings.",
-      "Exact timestamps showing when candidate entered current stage.",
-    ],
-    preferredPlacement: "bottom",
+      "Search any candidate by name, job role, or email with stage-specific filters and exact dwell-time entry timestamps.",
   },
   {
     targetId: "tour-target-drafts-toolbar",
     tabTarget: "drafts",
-    title: "Human-in-the-Loop Approval Queue",
-    badge: "Step 6 of 7 • Safety & Governance Gate",
+    category: "Human-in-the-Loop Governance",
+    title: "Follow-up Approval Gateway",
     description:
-      "Crucial AI Safety Boundary: Stall Alerter NEVER transmits autonomous communications. Outbound messages require explicit recruiter inspection, editing, and sign-off.",
-    keyPoints: [
-      "Recruiters review, personalize, and approve or reject drafted communications.",
-      "Decisions are immutably logged into the audit ledger for governance compliance.",
-    ],
-    preferredPlacement: "bottom",
+      "Review, personalize, and approve candidate re-engagement drafts. Autonomous outbound messaging is strictly locked behind human approval.",
   },
   {
     targetId: "tour-target-rules-toolbar",
     tabTarget: "rules",
-    title: "Configurable SLA Thresholds & Compliance",
-    badge: "Step 7 of 7 • SLA Engine Rules",
+    category: "Business Policy Engine",
+    title: "Configurable SLA Thresholds",
     description:
-      "Tailor allowable days per hiring phase (Resume Review, Screen, Interview, Offer). Edits take effect immediately on next stall scan.",
-    keyPoints: [
-      "Customizable thresholds in days with validation bounds.",
-      "Protected by administrative authentication checks.",
-    ],
-    preferredPlacement: "bottom",
+      "Tailor allowable days per hiring phase with optional weekend-exclusion calendar logic. Changes apply immediately to subsequent scans.",
+  },
+  {
+    targetId: "tour-target-audit-toolbar",
+    tabTarget: "audit",
+    category: "Compliance & Security",
+    title: "Immutable Audit Ledger",
+    description:
+      "Cryptographically traceable append-only trail logging every actor, action, timestamp, and target entity for SOC2/ISO compliance.",
   },
 ];
 
@@ -114,15 +90,15 @@ interface ProductTourModalProps {
 export default function ProductTourModal({ isOpen, onClose, onSwitchTab }: ProductTourModalProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
-  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number; placement: "top" | "bottom" | "center" }>({
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number }>({
     top: 200,
     left: 200,
-    placement: "bottom",
   });
 
   const step = TOUR_STEPS[currentStepIndex];
+  const totalSteps = TOUR_STEPS.length;
+  const progressPercent = Math.round(((currentStepIndex + 1) / totalSteps) * 100);
 
-  // When step changes, switch tab if needed and update target rect
   useEffect(() => {
     if (!isOpen) return;
 
@@ -133,53 +109,44 @@ export default function ProductTourModal({ isOpen, onClose, onSwitchTab }: Produ
     const updateRect = () => {
       const el = document.getElementById(step.targetId);
       if (el) {
-        // Scroll target gently into view if needed
         el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
         const rect = el.getBoundingClientRect();
         setTargetRect(rect);
 
-        // Compute popover position
-        const popoverWidth = Math.min(window.innerWidth * 0.9, 460);
-        const popoverHeight = 300; // estimated
-        const margin = 16;
+        const cardWidth = Math.min(window.innerWidth * 0.92, 380);
+        const cardHeight = 240;
+        const margin = 14;
 
-        let left = rect.left + rect.width / 2 - popoverWidth / 2;
-        left = Math.max(margin, Math.min(window.innerWidth - popoverWidth - margin, left));
+        // Horizontally center card with the element
+        let left = rect.left + rect.width / 2 - cardWidth / 2;
+        left = Math.max(margin, Math.min(window.innerWidth - cardWidth - margin, left));
 
-        // Place below if space permits, else above
+        // Place below if space permits, otherwise above
         const spaceBelow = window.innerHeight - (rect.bottom + margin);
-        const spaceAbove = rect.top - margin;
+        let top: number;
 
-        let top = 0;
-        let placement: "top" | "bottom" | "center" = "bottom";
-
-        if (spaceBelow >= popoverHeight || spaceBelow >= spaceAbove) {
+        if (spaceBelow >= cardHeight || rect.top < cardHeight) {
           top = rect.bottom + margin;
-          placement = "bottom";
         } else {
-          top = Math.max(margin, rect.top - popoverHeight - margin);
-          placement = "top";
+          top = Math.max(margin, rect.top - cardHeight - margin);
         }
 
-        setPopoverPos({ top, left, placement });
+        setPopoverPos({ top, left });
       } else {
-        // Fallback center
         setTargetRect(null);
         setPopoverPos({
-          top: window.innerHeight / 2 - 160,
-          left: window.innerWidth / 2 - 230,
-          placement: "center",
+          top: window.innerHeight / 2 - 120,
+          left: window.innerWidth / 2 - 190,
         });
       }
     };
 
-    // Allow slight delay for DOM tab switch to render
-    const t = setTimeout(updateRect, 120);
+    const timer = setTimeout(updateRect, 130);
     window.addEventListener("resize", updateRect);
     window.addEventListener("scroll", updateRect, true);
 
     return () => {
-      clearTimeout(t);
+      clearTimeout(timer);
       window.removeEventListener("resize", updateRect);
       window.removeEventListener("scroll", updateRect, true);
     };
@@ -188,7 +155,7 @@ export default function ProductTourModal({ isOpen, onClose, onSwitchTab }: Produ
   if (!isOpen) return null;
 
   const isFirst = currentStepIndex === 0;
-  const isLast = currentStepIndex === TOUR_STEPS.length - 1;
+  const isLast = currentStepIndex === totalSteps - 1;
 
   const handleNext = () => {
     if (!isLast) {
@@ -205,11 +172,11 @@ export default function ProductTourModal({ isOpen, onClose, onSwitchTab }: Produ
   };
 
   return (
-    <div className="spotlight-tour-overlay" onClick={onClose}>
-      {/* Dynamic Cutout Spotlight Box */}
+    <div className="tour-spotlight-backdrop" onClick={onClose}>
+      {/* Precision Cutout Ring Around the Active Feature Component */}
       {targetRect && (
         <div
-          className="spotlight-cutout"
+          className="tour-cutout-ring"
           style={{
             top: targetRect.top - 6,
             left: targetRect.left - 6,
@@ -219,9 +186,9 @@ export default function ProductTourModal({ isOpen, onClose, onSwitchTab }: Produ
         />
       )}
 
-      {/* Contextual Anchored Alert Popover */}
+      {/* Floating Alert Card Styled Exactly like Reference */}
       <div
-        className={`spotlight-popover placement-${popoverPos.placement}`}
+        className="tour-alert-card"
         style={{
           top: popoverPos.top,
           left: popoverPos.left,
@@ -230,62 +197,54 @@ export default function ProductTourModal({ isOpen, onClose, onSwitchTab }: Produ
         role="dialog"
         aria-modal="true"
       >
-        {/* Header */}
-        <div className="spotlight-header">
-          <div className="spotlight-badge-row">
-            <span className="spotlight-step-badge">{step.badge}</span>
-            <div className="spotlight-pills">
-              {TOUR_STEPS.map((_, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className={`spotlight-pill ${idx === currentStepIndex ? "active" : idx < currentStepIndex ? "done" : ""}`}
-                  onClick={() => setCurrentStepIndex(idx)}
-                />
-              ))}
-            </div>
+        {/* Card Header: Category Pill & Close Button */}
+        <div className="tour-card-header">
+          <div className="tour-category-tag">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 5 }}>
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            {step.category}
           </div>
-          <button className="spotlight-close-btn" onClick={onClose} aria-label="Close tour">
+          <button className="tour-close-x" onClick={onClose} aria-label="Close tour">
             ✕
           </button>
         </div>
 
-        {/* Body */}
-        <div className="spotlight-body">
-          <h3 className="spotlight-title">{step.title}</h3>
-          <p className="spotlight-desc">{step.description}</p>
+        {/* Card Body: Title & Clean Description */}
+        <div className="tour-card-body">
+          <h3 className="tour-card-title">{step.title}</h3>
+          <p className="tour-card-desc">{step.description}</p>
+        </div>
 
-          <div className="spotlight-points">
-            {step.keyPoints.map((pt, i) => (
-              <div key={i} className="spotlight-point-item">
-                <span className="spotlight-point-icon">✓</span>
-                <span>{pt}</span>
-              </div>
-            ))}
+        {/* Progress Bar & Percentage */}
+        <div className="tour-progress-section">
+          <div className="tour-progress-track">
+            <div
+              className="tour-progress-fill"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <div className="tour-progress-meta">
+            <span>Step {currentStepIndex + 1} of {totalSteps}</span>
+            <span>{progressPercent}%</span>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="spotlight-footer">
-          <button className="btn btn-secondary btn-sm" onClick={onClose}>
-            Exit Tour
+        {/* Card Footer: Prev, Skip, Next Buttons */}
+        <div className="tour-card-footer">
+          <button
+            className="tour-btn tour-btn-prev"
+            disabled={isFirst}
+            onClick={handlePrev}
+          >
+            ‹ Prev
           </button>
-
-          <div className="spotlight-nav-actions">
-            <button
-              className="btn btn-secondary btn-sm"
-              disabled={isFirst}
-              onClick={handlePrev}
-            >
-              ← Back
-            </button>
-            <button
-              className="btn btn-primary btn-sm spotlight-next-btn"
-              onClick={handleNext}
-            >
-              {isLast ? "Complete Tour ✓" : "Next Feature →"}
-            </button>
-          </div>
+          <button className="tour-btn tour-btn-skip" onClick={onClose}>
+            Skip
+          </button>
+          <button className="tour-btn tour-btn-next" onClick={handleNext}>
+            {isLast ? "Done ✓" : "Next ›"}
+          </button>
         </div>
       </div>
     </div>
