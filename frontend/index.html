@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stall Alerter — Hiring Pipeline Operational Console</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="brand-container">
+      <div class="brand-logo-mark" aria-hidden="true">SA</div>
+      <div>
+        <span class="brand-title">Stall Alerter</span>
+        <span class="brand-subtitle">Pipeline Operations Console</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="api-key-pill" title="Active Authentication Key">Key: dev-stall-alerter...</span>
+      <button id="btnScanNow" class="btn btn-primary btn-sm" aria-label="Trigger Stall Detection Scan">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        Run Stall Scan
+      </button>
+      <button id="btnOpenImport" class="btn btn-secondary btn-sm" aria-label="Open CSV Import Wizard">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        Import Candidates
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-container">
+
+    <!-- Stat Metrics Ribbon -->
+    <section class="metrics-grid" aria-label="Pipeline Operational Statistics">
+      <div class="stat-card">
+        <div class="stat-label">Tracked Candidates</div>
+        <div id="statCandidates" class="stat-value">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Open Overdue Alerts</div>
+        <div id="statOpenAlerts" class="stat-value stat-accent">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Critical SLA Breaches</div>
+        <div id="statCriticalAlerts" class="stat-value stat-critical">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending Follow-up Drafts</div>
+        <div id="statPendingDrafts" class="stat-value stat-high">0</div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-navigation" role="tablist">
+      <button class="nav-tab active" data-tab="tabAlerts" role="tab" aria-selected="true" id="tabBtnAlerts">Overdue Alerts</button>
+      <button class="nav-tab" data-tab="tabCandidates" role="tab" aria-selected="false" id="tabBtnCandidates">All Candidates</button>
+      <button class="nav-tab" data-tab="tabDrafts" role="tab" aria-selected="false" id="tabBtnDrafts">Follow-up Drafts</button>
+      <button class="nav-tab" data-tab="tabRules" role="tab" aria-selected="false" id="tabBtnRules">Stage SLA Rules</button>
+      <button class="nav-tab" data-tab="tabAudit" role="tab" aria-selected="false" id="tabBtnAudit">Audit Events</button>
+    </nav>
+
+    <!-- TAB 1: OVERDUE ALERTS INBOX -->
+    <section id="tabAlerts" class="tab-pane active" role="tabpanel" aria-labelledby="tabBtnAlerts">
+      <div class="action-toolbar">
+        <div class="toolbar-left">
+          <label for="filterSeverity" class="stat-label" style="margin:0;">Filter Severity:</label>
+          <select id="filterSeverity" class="form-select">
+            <option value="">All Severities</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+          </select>
+
+          <label for="filterStatus" class="stat-label" style="margin:0; margin-left:0.5rem;">Status:</label>
+          <select id="filterStatus" class="form-select">
+            <option value="open">Open Alerts</option>
+            <option value="resolved">Resolved</option>
+            <option value="all">All Alerts</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <span id="alertsCountLabel" class="stat-label" style="margin:0;">0 alerts loaded</span>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="ops-table" id="alertsTable">
+            <thead>
+              <tr>
+                <th scope="col">Urgency</th>
+                <th scope="col">Candidate Name</th>
+                <th scope="col">Target Role</th>
+                <th scope="col">Stage</th>
+                <th scope="col">Idle Days</th>
+                <th scope="col">Assigned Recruiter</th>
+                <th scope="col">Recommended Action</th>
+              </tr>
+            </thead>
+            <tbody id="alertsTableBody">
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                  Loading pipeline alerts...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: ALL CANDIDATES DIRECTORY -->
+    <section id="tabCandidates" class="tab-pane" style="display:none;" role="tabpanel" aria-labelledby="tabBtnCandidates">
+      <div class="action-toolbar">
+        <div class="toolbar-left">
+          <input type="text" id="candSearchInput" class="form-input" placeholder="Search by name, email, or role..." style="width: 280px;">
+          <button id="btnSearchCand" class="btn btn-secondary btn-sm">Search</button>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="ops-table" id="candidatesTable">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Role</th>
+                <th scope="col">Current Stage</th>
+                <th scope="col">Stage Entered At</th>
+                <th scope="col">Recruiter</th>
+              </tr>
+            </thead>
+            <tbody id="candidatesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: FOLLOW-UP DRAFTS & APPROVAL QUEUE -->
+    <section id="tabDrafts" class="tab-pane" style="display:none;" role="tabpanel" aria-labelledby="tabBtnDrafts">
+      <div class="action-toolbar">
+        <div class="toolbar-left">
+          <span class="stat-label">Human-in-the-Loop Approval Queue (Outbound messages require explicit authorized review)</span>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="ops-table" id="draftsTable">
+            <thead>
+              <tr>
+                <th scope="col">Action ID</th>
+                <th scope="col">Type</th>
+                <th scope="col">Draft Preview</th>
+                <th scope="col">Status</th>
+                <th scope="col">Created At</th>
+                <th scope="col">Governance Action</th>
+              </tr>
+            </thead>
+            <tbody id="draftsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: STAGE SLA RULES CONFIGURATION -->
+    <section id="tabRules" class="tab-pane" style="display:none;" role="tabpanel" aria-labelledby="tabBtnRules">
+      <div class="action-toolbar">
+        <span class="stat-label">Configurable Service Level Agreements (SLA Thresholds in Days)</span>
+      </div>
+
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="ops-table" id="rulesTable">
+            <thead>
+              <tr>
+                <th scope="col">Hiring Pipeline Stage</th>
+                <th scope="col">Max Allowable Days (SLA)</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="rulesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: AUDIT EVENTS LOG -->
+    <section id="tabAudit" class="tab-pane" style="display:none;" role="tabpanel" aria-labelledby="tabBtnAudit">
+      <div class="action-toolbar">
+        <span class="stat-label">Immutable Audit Trail (Compliance & Security Governance)</span>
+      </div>
+
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="ops-table" id="auditTable">
+            <thead>
+              <tr>
+                <th scope="col">Timestamp (UTC)</th>
+                <th scope="col">Actor</th>
+                <th scope="col">Action</th>
+                <th scope="col">Target Entity</th>
+                <th scope="col">Details</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: CSV Import Wizard -->
+  <dialog id="importDialog" class="ops-dialog" aria-labelledby="importDialogTitle">
+    <div class="dialog-header">
+      <h2 id="importDialogTitle" class="dialog-title">Import Candidate Applications (CSV)</h2>
+      <button class="btn btn-secondary btn-sm" id="btnCloseImport" aria-label="Close dialog">✕</button>
+    </div>
+    <div class="dialog-body">
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+        Upload a valid ATS CSV export containing candidate stage timelines. Required columns:
+        <code>external_id</code>, <code>name</code>, <code>email</code>, <code>job_title</code>, <code>stage</code>, <code>stage_entered_at</code>.
+      </p>
+      
+      <div style="border: 2px dashed var(--border-strong); padding: 2rem; text-align: center; border-radius: var(--radius-sm); margin-bottom: 1rem; background-color: var(--bg-surface-subtle);">
+        <input type="file" id="csvFileInput" accept=".csv" style="display: block; margin: 0 auto;">
+      </div>
+
+      <div id="importResultBox" style="display: none; padding: 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle);">
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" id="btnCancelImport">Cancel</button>
+      <button class="btn btn-primary" id="btnSubmitImport">Upload & Process</button>
+    </div>
+  </dialog>
+
+  <!-- MODAL: Draft Review & Approval Dialog -->
+  <dialog id="draftReviewDialog" class="ops-dialog" aria-labelledby="draftDialogTitle">
+    <div class="dialog-header">
+      <h2 id="draftDialogTitle" class="dialog-title">Review & Approve Follow-up Outreach</h2>
+      <button class="btn btn-secondary btn-sm" id="btnCloseDraftDialog" aria-label="Close dialog">✕</button>
+    </div>
+    <div class="dialog-body">
+      <div style="margin-bottom: 1rem;">
+        <label for="draftTextarea" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.4rem;">
+          Editable Follow-up Draft Message:
+        </label>
+        <textarea id="draftTextarea" class="form-input" style="width: 100%; height: 180px; font-family: inherit; font-size: 0.88rem; line-height: 1.4;"></textarea>
+      </div>
+      <p style="font-size: 0.78rem; color: var(--text-muted);">
+        Policy Notice: External delivery is gated by human approval. The server records your authorization and timestamp in the audit log.
+      </p>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-danger" id="btnRejectDraft">Reject Draft</button>
+      <button class="btn btn-primary" id="btnApproveDraft">Approve Message</button>
+    </div>
+  </dialog>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

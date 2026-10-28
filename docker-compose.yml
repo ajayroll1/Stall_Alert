@@ -1,0 +1,15 @@
+services:
+  stall-alerter:
+    build: .
+    container_name: stall_alerter_service
+    ports:
+      - "8000:8000"
+    environment:
+      - STALL_ALERTER_API_KEY=dev-stall-alerter-secret-key-32chars-min
+      - DATABASE_PATH=/app/data/stall_alerter.db
+    volumes:
+      - stall_alerter_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  stall_alerter_data:

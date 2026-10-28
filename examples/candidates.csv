@@ -1,0 +1,8 @@
+external_id,name,email,job_title,stage,stage_entered_at,last_activity_at,recruiter
+C-1001,Asha Sharma,asha.sharma@example.com,Senior Backend Engineer,Technical Interview,2026-10-01T10:00:00Z,2026-10-02T14:30:00Z,Riya Sen
+C-1002,Rohan Verma,rohan.verma@example.com,Lead Product Analyst,Recruiter Screen,2026-10-25T09:15:00Z,2026-10-26T11:00:00Z,Ankit Mehta
+C-1003,Elena Rostova,elena.r@example.com,Staff Security Architect,Hiring Manager Review,2026-10-10T11:00:00Z,2026-10-12T09:00:00Z,Riya Sen
+C-1004,Devendra Patel,dev.patel@example.com,Senior Frontend Engineer,Offer Stage,2026-10-22T16:00:00Z,2026-10-23T10:00:00Z,Sara Jenkins
+C-1005,Maya Lin,maya.lin@example.com,AI Research Engineer,Onsite Interview,2026-10-05T08:30:00Z,2026-10-06T15:00:00Z,Ankit Mehta
+C-1006,Marcus Brody,marcus.b@example.com,DevOps / SRE Lead,Take Home Assignment,2026-10-18T13:45:00Z,2026-10-19T10:15:00Z,Sara Jenkins
+C-1007,Priya Sundaram,priya.s@example.com,Product Operations Specialist,Application Review,2026-10-27T08:00:00Z,2026-10-27T12:00:00Z,Riya Sen
