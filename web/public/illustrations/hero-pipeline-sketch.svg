@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" width="100%" height="100%">
+  <defs>
+    <filter id="pencil-texture" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" />
+    </filter>
+    <linearGradient id="soft-wash" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdfbf7" />
+      <stop offset="100%" stop-color="#e8f0ec" stop-opacity="0.6" />
+    </linearGradient>
+  </defs>
+
+  <rect width="600" height="450" fill="url(#soft-wash)" rx="16" />
+  
+  <!-- Grid guide lines for sketch aesthetic -->
+  <line x1="50" y1="120" x2="550" y2="120" stroke="#e5e2db" stroke-width="1" stroke-dasharray="4 4" />
+  <line x1="50" y1="240" x2="550" y2="240" stroke="#e5e2db" stroke-width="1" stroke-dasharray="4 4" />
+  <line x1="50" y1="360" x2="550" y2="360" stroke="#e5e2db" stroke-width="1" stroke-dasharray="4 4" />
+
+  <g filter="url(#pencil-texture)">
+    <!-- Kanban/Funnel Board Sketch -->
+    <rect x="70" y="60" width="130" height="280" rx="6" fill="#ffffff" stroke="#1e3d34" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+    <line x1="85" y1="90" x2="185" y2="90" stroke="#1e3d34" stroke-width="2" />
+    <text x="85" y="82" font-family="monospace" font-size="11" font-weight="bold" fill="#1e3d34">1. APPLIED</text>
+
+    <!-- Card 1 (Smooth) -->
+    <rect x="85" y="105" width="100" height="48" rx="4" fill="#faf9f6" stroke="#535962" stroke-width="1.4" stroke-dasharray="3 1" />
+    <line x1="95" y1="120" x2="165" y2="120" stroke="#1d2125" stroke-width="1.8" />
+    <line x1="95" y1="134" x2="140" y2="134" stroke="#7d8590" stroke-width="1.4" />
+
+    <!-- Column 2 (Technical Interview - Stalled Hourglass) -->
+    <rect x="235" y="60" width="130" height="280" rx="6" fill="#ffffff" stroke="#1e3d34" stroke-width="2.4" stroke-linecap="round" />
+    <line x1="250" y1="90" x2="350" y2="90" stroke="#1e3d34" stroke-width="2" />
+    <text x="250" y="82" font-family="monospace" font-size="11" font-weight="bold" fill="#1e3d34">2. TECH INTERVIEW</text>
+
+    <!-- Stalled Candidate Card with Warm Amber/Red Alert Ring -->
+    <rect x="250" y="105" width="100" height="80" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2" />
+    <circle cx="265" cy="125" r="7" fill="none" stroke="#dc2626" stroke-width="1.8" />
+    <line x1="265" y1="122" x2="265" y2="126" stroke="#dc2626" stroke-width="1.8" />
+    <circle cx="265" cy="129" r="1" fill="#dc2626" />
+    <text x="277" y="128" font-family="sans-serif" font-size="11" font-weight="bold" fill="#92400e">STALL (8d)</text>
+    <line x1="260" y1="145" x2="335" y2="145" stroke="#1d2125" stroke-width="1.8" />
+    <line x1="260" y1="158" x2="315" y2="158" stroke="#7d8590" stroke-width="1.4" />
+    
+    <!-- Hourglass Cartoon Character beside it -->
+    <g transform="translate(270, 200)">
+      <!-- Hourglass hand sketch -->
+      <path d="M 15 5 L 45 5 L 30 25 L 45 45 L 15 45 L 30 25 Z" fill="#ffffff" stroke="#1e3d34" stroke-width="2" stroke-linejoin="round" />
+      <path d="M 22 10 L 38 10 L 30 23 Z" fill="#d97706" opacity="0.7" />
+      <path d="M 24 40 L 36 40 L 30 32 Z" fill="#d97706" opacity="0.9" />
+      <!-- Eyes on hourglass -->
+      <circle cx="26" cy="22" r="1.5" fill="#1d2125" />
+      <circle cx="34" cy="22" r="1.5" fill="#1d2125" />
+      <path d="M 27 27 Q 30 29 33 27" fill="none" stroke="#1d2125" stroke-width="1.2" />
+    </g>
+
+    <!-- Column 3 (Offer Extended) -->
+    <rect x="400" y="60" width="130" height="280" rx="6" fill="#ffffff" stroke="#1e3d34" stroke-width="2.2" stroke-linecap="round" />
+    <line x1="415" y1="90" x2="515" y2="90" stroke="#1e3d34" stroke-width="2" />
+    <text x="415" y="82" font-family="monospace" font-size="11" font-weight="bold" fill="#1e3d34">3. OFFER STAGE</text>
+
+    <!-- Card 3 -->
+    <rect x="415" y="105" width="100" height="52" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.6" />
+    <line x1="425" y1="122" x2="495" y2="122" stroke="#1d2125" stroke-width="1.8" />
+    <line x1="425" y1="136" x2="470" y2="136" stroke="#166534" stroke-width="1.4" />
+
+    <!-- Pencil Sketch Mascot / Alert Detective at Bottom -->
+    <g transform="translate(180, 340)">
+      <!-- Friendly pencil sketch inspector with magnifying glass -->
+      <circle cx="40" cy="40" r="24" fill="#ffffff" stroke="#1e3d34" stroke-width="2.2" />
+      <!-- Eyes & smile -->
+      <circle cx="33" cy="36" r="2.5" fill="#1e3d34" />
+      <circle cx="47" cy="36" r="2.5" fill="#1e3d34" />
+      <path d="M 33 46 Q 40 52 47 46" fill="none" stroke="#1e3d34" stroke-width="2" stroke-linecap="round" />
+      <!-- Detective hat sketch -->
+      <path d="M 16 24 C 20 10, 60 10, 64 24 Z" fill="#1e3d34" />
+      <ellipse cx="40" cy="24" rx="30" ry="5" fill="#1e3d34" />
+      <!-- Magnifying glass examining a speech bubble -->
+      <circle cx="85" cy="40" r="16" fill="none" stroke="#1e3d34" stroke-width="2.4" />
+      <line x1="97" y1="52" x2="115" y2="70" stroke="#1e3d34" stroke-width="4" stroke-linecap="round" />
+      <!-- Checkmark in magnifying glass -->
+      <path d="M 78 40 L 83 45 L 93 35" fill="none" stroke="#16a34a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+      <!-- Floating speech bubble -->
+      <rect x="130" y="20" width="180" height="42" rx="8" fill="#1e3d34" />
+      <text x="142" y="44" font-family="sans-serif" font-size="11" font-weight="600" fill="#ffffff">Automated Follow-up Ready</text>
+    </g>
+  </g>
+</svg>

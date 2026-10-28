@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" width="100%" height="100%">
+  <defs>
+    <filter id="sketch-filter" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" />
+    </filter>
+  </defs>
+
+  <rect width="500" height="400" fill="#fcfbf9" rx="12" />
+
+  <g filter="url(#sketch-filter)">
+    <!-- Clipboard Outline -->
+    <rect x="70" y="40" width="360" height="320" rx="10" fill="#ffffff" stroke="#1e3d34" stroke-width="2.6" />
+    <rect x="180" y="24" width="140" height="32" rx="6" fill="#1e3d34" />
+    <circle cx="250" cy="40" r="5" fill="#fcfbf9" />
+
+    <!-- SLA Formula & Stage Rules Sketch -->
+    <text x="100" y="95" font-family="monospace" font-size="14" font-weight="bold" fill="#1e3d34">STAGE_SLA_POLICY.cfg</text>
+    <line x1="100" y1="105" x2="400" y2="105" stroke="#e5e2db" stroke-width="1.8" />
+
+    <!-- Rule 1 -->
+    <rect x="100" y="125" width="22" height="22" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.8" />
+    <path d="M 104 136 L 109 141 L 118 131" fill="none" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+    <text x="135" y="141" font-family="sans-serif" font-size="13" font-weight="600" fill="#1d2125">Screening: Max 3 Days</text>
+    <text x="340" y="141" font-family="monospace" font-size="11" fill="#166534">OK (Active)</text>
+
+    <!-- Rule 2 -->
+    <rect x="100" y="170" width="22" height="22" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="1.8" />
+    <line x1="105" y1="181" x2="117" y2="181" stroke="#d97706" stroke-width="2" />
+    <text x="135" y="186" font-family="sans-serif" font-size="13" font-weight="600" fill="#1d2125">Tech Interview: Max 5 Days</text>
+    <text x="340" y="186" font-family="monospace" font-size="11" fill="#92400e">Strict SLA</text>
+
+    <!-- Rule 3 -->
+    <rect x="100" y="215" width="22" height="22" rx="4" fill="#fdf2f2" stroke="#dc2626" stroke-width="1.8" />
+    <circle cx="111" cy="226" r="4" fill="#dc2626" />
+    <text x="135" y="231" font-family="sans-serif" font-size="13" font-weight="600" fill="#1d2125">Offer Extended: Max 3 Days</text>
+    <text x="340" y="231" font-family="monospace" font-size="11" fill="#991b1b">Urgent</text>
+
+    <!-- Sketchy Pencil lying across bottom -->
+    <g transform="translate(140, 275) rotate(-8)">
+      <polygon points="0,6 200,6 200,18 0,18" fill="#d97706" stroke="#1e3d34" stroke-width="1.6" />
+      <polygon points="200,6 220,12 200,18" fill="#f3f1ec" stroke="#1e3d34" stroke-width="1.6" />
+      <polygon points="214,10 220,12 214,14" fill="#1d2125" />
+      <rect x="0" y="6" width="30" height="12" fill="#e5e2db" stroke="#1e3d34" stroke-width="1.6" />
+      <text x="50" y="15" font-family="monospace" font-size="8" font-weight="bold" fill="#ffffff">STALL-ALERTER-ENGINE</text>
+    </g>
+  </g>
+</svg>
