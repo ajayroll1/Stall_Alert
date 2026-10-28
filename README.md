@@ -1,4 +1,4 @@
-# 🚨 STALL ALERTER
+# STALL ALERTER
 > **Production-Grade, Security-First, AI-Enabled Hiring Pipeline Stall Detection & Operational Workflow Automation**
 
 [![CI Pipeline](https://github.com/ajayroll1/Stall_Alert/actions/workflows/ci.yml/badge.svg)](https://github.com/ajayroll1/Stall_Alert/actions)
@@ -10,15 +10,15 @@
 
 ---
 
-## 📌 Executive Summary & Product Mission
+## Executive Summary & Product Mission
 Hiring velocity suffers when candidates sit unattended in recruiting pipeline stages without timely follow-ups. **Stall Alerter** provides operations teams with transparent, explainable alerts when candidates exceed stage-specific Service Level Agreements (SLAs).
 
-> ⚠️ **Safety & Fairness Boundary:**  
+> **Safety & Fairness Boundary:**  
 > Stall Alerter is strictly a **recruiting operations coordination tool**, NOT an automated decision-maker. It never calculates employability scores, infers protected characteristics, or decides candidate suitability. Alert severity represents **operational urgency**, never candidate merit. External candidate communications require explicit authorized human approval.
 
 ---
 
-## 🏗️ System Architecture & Workflow
+## System Architecture & Workflow
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -52,7 +52,7 @@ Hiring velocity suffers when candidates sit unattended in recruiting pipeline st
 
 ---
 
-## ✨ Core Features & Capabilities
+## Core Features & Capabilities
 
 1. **Deterministic SLA Monitoring:** Evaluates candidate time-in-stage using UTC math. Zero LLM hallucinations in SLA calculations.
 2. **Deduplicated Ingestion:** Validates candidate CSV exports, protects against CSV formula injection, and performs idempotent upserts on `external_id`.
@@ -60,16 +60,16 @@ Hiring velocity suffers when candidates sit unattended in recruiting pipeline st
 4. **Human-in-the-Loop Outreach:** Evidence-based, neutral communication drafting with explicit recruiter review and approval gates.
 5. **Immutable Audit Trail:** Append-only chronological logging of every import, rule edit, scan, draft, and approval.
 6. **Dual Frontend Options:**
-   - **Modern Next.js 15 (React 19, TS):** Client-side reactive console with responsive mobile layouts.
+   - **Modern Next.js 15 (React 19, TS):** Client-side reactive console with responsive mobile layouts, dynamic filters, pagination, and micro-animations.
    - **Embedded Vanilla Console:** Lightweight zero-node fallback served directly by FastAPI at `/console/`.
 
 ---
 
-## 🛠️ Complete Technology Stack
+## Complete Technology Stack
 
 | Layer | Technology | Specification / Version |
 |---|---|---|
-| **Web Frontend** | **Next.js 15+ (React 19)** | TypeScript 5+, Turbopack, Accessible Modals, Toast Feedback |
+| **Web Frontend** | **Next.js 15+ (React 19)** | TypeScript 5+, Turbopack, Accessible Modals, Toast Feedback, Smooth Animations |
 | **Styling** | **Custom CSS Design Tokens** | Warm B2B aesthetic (`#f9f8f6`, charcoal `#1d2125`, forest green `#1e3d34`) |
 | **Backend API** | **FastAPI** | Python 3.10+ (tested on Python 3.14), Uvicorn ASGI |
 | **Data Validation** | **Pydantic v2** | Strict schema validation (`pydantic-core 2.46+`) |
@@ -79,7 +79,7 @@ Hiring velocity suffers when candidates sit unattended in recruiting pipeline st
 
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
 ### Prerequisites
 - **Python 3.10+** (Tested on Python 3.14.7)
@@ -121,13 +121,13 @@ npm run dev
 ```
 
 ### 4. Access Interfaces
-- 🖥️ **Next.js Web App:** [http://localhost:3000](http://localhost:3000)
-- 📖 **Interactive API Swagger UI:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- 🟢 **Health Check Probe:** [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+- **Next.js Web App:** [http://localhost:3000](http://localhost:3000)
+- **Interactive API Swagger UI:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- **Health Check Probe:** [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
 
 ---
 
-## 🧪 Testing & Verification
+## Testing & Verification
 
 Run the comprehensive automated pytest suite:
 ```powershell
@@ -148,7 +148,7 @@ tests/test_logic.py::test_full_pipeline_flow PASSED             [100%]
 
 ---
 
-## 🔒 Security & Compliance
+## Security & Compliance
 - **API Key Authentication:** Protected via `X-API-Key` headers; unauthorized requests return HTTP 401.
 - **SQL Injection Defense:** Strict parameterized SQL queries across all endpoints.
 - **Formula Injection Defense:** CSV cells sanitized against spreadsheet formula exploitation (`=`, `@`, `+`, `-`).
@@ -156,7 +156,7 @@ tests/test_logic.py::test_full_pipeline_flow PASSED             [100%]
 
 ---
 
-## 📚 Documentation Index
+## Documentation Index
 - [`docs/TECH_STACK.md`](docs/TECH_STACK.md) — Comprehensive technical stack specification.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — Architectural design, data flows, and trust boundaries.
 - [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) — Master implementation checklist with verified task statuses.

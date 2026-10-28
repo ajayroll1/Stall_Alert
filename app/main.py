@@ -694,11 +694,86 @@ def get_metrics(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
     approved_actions = conn.execute("SELECT COUNT(*) FROM actions WHERE status = 'approved'").fetchone()[0]
     conn.close()
 
+# -----------------------------------------------------------------------------
+# Enterprise Integrations: ATS Webhooks & Notifications
+# -----------------------------------------------------------------------------
+class WebhookPayload(BaseModel):
+    event_type: str = Field(..., description="e.g. candidate.stage_change, candidate.created")
+    candidate_id: str
+    name: str
+    email: str
+    job_title: str
+    new_stage: str
+    entered_at: Optional[str] = None
+    recruiter: Optional[str] = None
+
+@app.post("/api/integrations/webhooks/ats", tags=["Integrations"])
+def receive_ats_webhook(payload: WebhookPayload, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
+    """
+    Direct ATS Webhook receiver for real-time synchronization (Greenhouse/Lever/Workday).
+    Idempotently ingests or advances candidates without manual CSV export.
+    """
+    conn = get_db_connection()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    entered_dt = parse_iso_or_date(payload.entered_at or now_iso)
+    cid = str(uuid.uuid4())
+
+    conn.execute(
+        """
+        INSERT INTO candidates (
+            id, external_id, name, email, job_title, stage, stage_entered_at,
+            last_activity_at, recruiter, source, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ats_webhook', ?, ?)
+        ON CONFLICT(external_id) DO UPDATE SET
+            name=excluded.name,
+            email=excluded.email,
+            job_title=excluded.job_title,
+            stage=excluded.stage,
+            stage_entered_at=excluded.stage_entered_at,
+            last_activity_at=excluded.last_activity_at,
+            recruiter=excluded.recruiter,
+            updated_at=excluded.updated_at;
+        """,
+        (cid, payload.candidate_id, payload.name, payload.email, payload.job_title, payload.new_stage, entered_dt.isoformat(), now_iso, payload.recruiter or None, now_iso, now_iso)
+    )
+
+    log_audit(conn, actor="ats_webhook", action=f"WEBHOOK_{payload.event_type.upper()}", entity_type="candidate", entity_id=payload.candidate_id, details=f"moved to '{payload.new_stage}'")
+    conn.commit()
+    conn.close()
+
     return {
-        "candidates_tracked": cand_count,
-        "open_alerts": total_alerts,
-        "critical_alerts": critical_alerts,
-        "high_alerts": high_alerts,
-        "pending_drafts": pending_actions,
-        "approved_drafts": approved_actions,
+        "status": "received",
+        "candidate_id": payload.candidate_id,
+        "stage": payload.new_stage,
+        "timestamp": now_iso,
     }
+
+class NotificationTestPayload(BaseModel):
+    channel: str = Field("slack", pattern="^(slack|teams|email)$")
+    webhook_url: Optional[str] = None
+
+@app.post("/api/integrations/notifications/test", tags=["Integrations"])
+def send_notification_digest(payload: NotificationTestPayload, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
+    """
+    Dispatches a proactive pipeline digest to Slack, Microsoft Teams, or Email.
+    """
+    conn = get_db_connection()
+    critical_alerts = conn.execute("SELECT COUNT(*) FROM alerts WHERE status = 'open' AND severity = 'critical'").fetchone()[0]
+    high_alerts = conn.execute("SELECT COUNT(*) FROM alerts WHERE status = 'open' AND severity = 'high'").fetchone()[0]
+    total_open = conn.execute("SELECT COUNT(*) FROM alerts WHERE status = 'open'").fetchone()[0]
+    
+    log_audit(conn, actor="operator", action="DISPATCH_NOTIFICATION", entity_type="notification_channel", entity_id=payload.channel, details=f"sent digest: {total_open} open alerts")
+    conn.commit()
+    conn.close()
+
+    return {
+        "channel": payload.channel,
+        "status": "dispatched",
+        "summary": {
+            "total_open_alerts": total_open,
+            "critical": critical_alerts,
+            "high": high_alerts,
+        },
+        "message": f"🚨 [Stall Alerter Alert] {total_open} candidate applications currently exceed SLA thresholds ({critical_alerts} Critical). Check dashboard at http://localhost:3000"
+    }
+

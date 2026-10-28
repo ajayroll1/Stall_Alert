@@ -410,6 +410,165 @@ table.ops-table tr:hover td {
 /* -----------------------------------------------------------------------------
    Mobile & Responsive Media Queries
    ----------------------------------------------------------------------------- */
+/* -----------------------------------------------------------------------------
+   Empty States & Polished Visuals
+   ----------------------------------------------------------------------------- */
+.empty-state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem 1.5rem;
+  text-align: center;
+  background-color: var(--bg-surface);
+}
+
+.empty-state-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--medium-bg);
+  border: 1px solid var(--medium-border);
+  color: var(--medium-badge);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.empty-state-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.35rem;
+}
+
+.empty-state-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 420px;
+}
+
+/* -----------------------------------------------------------------------------
+   Pagination & Filter Controls Styling
+   ----------------------------------------------------------------------------- */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface-subtle);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pagination-info {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.page-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  color: var(--text-main);
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 32px;
+  text-align: center;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--bg-surface-subtle);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.page-btn.active {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+  font-weight: 600;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Smooth Tab Transitions & Micro-Animations */
+.tab-pane-content {
+  animation: fadeInPane 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInPane {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-card {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.ops-table tr {
+  transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.ops-table tbody tr:hover {
+  background-color: rgba(30, 61, 52, 0.035);
+}
+
+.btn {
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.page-btn {
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.page-btn:active:not(:disabled) {
+  transform: scale(0.93);
+}
+
+.form-select, .form-input {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.badge {
+  transition: transform 0.18s ease;
+}
+
+.badge:hover {
+  transform: scale(1.04);
+}
+
+
 @media (max-width: 768px) {
   header.app-header {
     padding: 0.75rem 1rem;

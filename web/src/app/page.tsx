@@ -52,6 +52,19 @@ export default function DashboardPage() {
   // Audit
   const [auditLogs, setAuditLogs] = useState<AuditRecord[]>([]);
 
+  // Pagination States (Clean 5 items per page with page index)
+  const [alertsPage, setAlertsPage] = useState<number>(1);
+  const [candidatesPage, setCandidatesPage] = useState<number>(1);
+  const [draftsPage, setDraftsPage] = useState<number>(1);
+  const [auditPage, setAuditPage] = useState<number>(1);
+  const PAGE_SIZE = 5;
+
+  // Additional Role/Stage Filters
+  const [stageFilter, setStageFilter] = useState<string>("");
+  const [candidateStageFilter, setCandidateStageFilter] = useState<string>("");
+  const [draftStatusFilter, setDraftStatusFilter] = useState<string>("");
+  const [auditActionFilter, setAuditActionFilter] = useState<string>("");
+
   // CSV Import Modal
   const [showImportModal, setShowImportModal] = useState<boolean>(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -251,34 +264,57 @@ export default function DashboardPage() {
 
         {/* TAB 1: ALERTS */}
         {activeTab === "alerts" && (
-          <section>
+          <section className="tab-pane-content">
             <div className="action-toolbar">
               <div className="toolbar-left">
-                <label className="stat-label" style={{ margin: 0 }}>Filter Severity:</label>
+                <label className="stat-label" style={{ margin: 0 }}>Severity:</label>
                 <select
                   className="form-select"
                   value={severityFilter}
-                  onChange={(e) => setSeverityFilter(e.target.value)}
+                  onChange={(e) => {
+                    setSeverityFilter(e.target.value);
+                    setAlertsPage(1);
+                  }}
                 >
                   <option value="">All Severities</option>
-                  <option value="critical">Critical</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
+                  <option value="critical">Critical (&ge; 2x SLA)</option>
+                  <option value="high">High (&ge; 1.5x SLA)</option>
+                  <option value="medium">Medium (&ge; 1x SLA)</option>
                 </select>
 
                 <label className="stat-label" style={{ margin: 0, marginLeft: "0.5rem" }}>Status:</label>
                 <select
                   className="form-select"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setAlertsPage(1);
+                  }}
                 >
                   <option value="open">Open Alerts</option>
                   <option value="resolved">Resolved Alerts</option>
                   <option value="all">All Alerts</option>
                 </select>
+
+                <label className="stat-label" style={{ margin: 0, marginLeft: "0.5rem" }}>Stage:</label>
+                <select
+                  className="form-select"
+                  value={stageFilter}
+                  onChange={(e) => {
+                    setStageFilter(e.target.value);
+                    setAlertsPage(1);
+                  }}
+                >
+                  <option value="">All Stages</option>
+                  {rules.map((r) => (
+                    <option key={r.stage} value={r.stage}>{r.stage}</option>
+                  ))}
+                </select>
               </div>
               <div className="toolbar-right">
-                <span className="stat-label" style={{ margin: 0 }}>{alerts.length} alerts loaded</span>
+                <span className="stat-label" style={{ margin: 0 }}>
+                  {alerts.filter(a => !stageFilter || a.stage === stageFilter).length} alerts found
+                </span>
               </div>
             </div>
 
@@ -297,14 +333,32 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {alerts.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
-                          No alerts found.
-                        </td>
-                      </tr>
-                    ) : (
-                      alerts.map((a) => (
+                    {(() => {
+                      const filtered = alerts.filter(a => !stageFilter || a.stage === stageFilter);
+                      const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+                      const paginated = filtered.slice((alertsPage - 1) * PAGE_SIZE, alertsPage * PAGE_SIZE);
+
+                      if (filtered.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={7} style={{ padding: 0 }}>
+                              <div className="empty-state-box">
+                                <div className="empty-state-icon">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M20 6L9 17l-5-5"/>
+                                  </svg>
+                                </div>
+                                <div className="empty-state-title">Pipeline Operating Within SLA Thresholds</div>
+                                <div className="empty-state-desc">
+                                  All tracked candidate applications are progressing on schedule. No overdue bottlenecks detected.
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return paginated.map((a) => (
                         <tr key={a.id}>
                           <td>
                             <span className={`badge badge-${a.severity}`}>{a.severity}</span>
@@ -327,18 +381,58 @@ export default function DashboardPage() {
                             </button>
                           </td>
                         </tr>
-                      ))
-                    )}
+                      ));
+                    })()}
                   </tbody>
                 </table>
               </div>
+
+              {/* Responsive Pagination Bar for Alerts */}
+              {(() => {
+                const filtered = alerts.filter(a => !stageFilter || a.stage === stageFilter);
+                const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+                if (totalPages <= 1) return null;
+
+                return (
+                  <div className="pagination-bar">
+                    <div className="pagination-info">
+                      Showing Page <strong>{alertsPage}</strong> of <strong>{totalPages}</strong> ({filtered.length} total alerts)
+                    </div>
+                    <div className="pagination-controls">
+                      <button
+                        className="page-btn"
+                        disabled={alertsPage === 1}
+                        onClick={() => setAlertsPage((p) => Math.max(1, p - 1))}
+                      >
+                        &larr; Prev
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+                        <button
+                          key={num}
+                          className={`page-btn ${alertsPage === num ? "active" : ""}`}
+                          onClick={() => setAlertsPage(num)}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                      <button
+                        className="page-btn"
+                        disabled={alertsPage === totalPages}
+                        onClick={() => setAlertsPage((p) => Math.min(totalPages, p + 1))}
+                      >
+                        Next &rarr;
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </section>
         )}
 
         {/* TAB 2: CANDIDATES */}
         {activeTab === "candidates" && (
-          <section>
+          <section className="tab-pane-content">
             <div className="action-toolbar">
               <div className="toolbar-left">
                 <input
@@ -347,14 +441,37 @@ export default function DashboardPage() {
                   placeholder="Search by name, role or email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ width: 280 }}
+                  style={{ width: 260 }}
                 />
                 <button
                   className="btn btn-secondary btn-sm"
-                  onClick={() => fetchCandidates(searchQuery).then(setCandidates)}
+                  onClick={() => {
+                    setCandidatesPage(1);
+                    fetchCandidates(searchQuery).then(setCandidates);
+                  }}
                 >
                   Search
                 </button>
+
+                <label className="stat-label" style={{ margin: 0, marginLeft: "0.5rem" }}>Stage:</label>
+                <select
+                  className="form-select"
+                  value={candidateStageFilter}
+                  onChange={(e) => {
+                    setCandidateStageFilter(e.target.value);
+                    setCandidatesPage(1);
+                  }}
+                >
+                  <option value="">All Stages</option>
+                  {rules.map((r) => (
+                    <option key={r.stage} value={r.stage}>{r.stage}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="toolbar-right">
+                <span className="stat-label" style={{ margin: 0 }}>
+                  {candidates.filter(c => !candidateStageFilter || c.stage === candidateStageFilter).length} candidates found
+                </span>
               </div>
             </div>
 
@@ -373,31 +490,111 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {candidates.map((c) => (
-                      <tr key={c.id}>
-                        <td><code>{c.external_id}</code></td>
-                        <td><strong>{c.name}</strong></td>
-                        <td>{c.email}</td>
-                        <td>{c.job_title}</td>
-                        <td>{c.stage}</td>
-                        <td>{new Date(c.stage_entered_at).toLocaleDateString()}</td>
-                        <td>{c.recruiter || "-"}</td>
-                      </tr>
-                    ))}
+                    {(() => {
+                      const filteredCandidates = candidates.filter(
+                        (c) => !candidateStageFilter || c.stage === candidateStageFilter
+                      );
+                      const paginatedCandidates = filteredCandidates.slice(
+                        (candidatesPage - 1) * PAGE_SIZE,
+                        candidatesPage * PAGE_SIZE
+                      );
+
+                      if (filteredCandidates.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={7} style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
+                              No candidates found matching criteria.
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return paginatedCandidates.map((c) => (
+                        <tr key={c.id}>
+                          <td><code>{c.external_id}</code></td>
+                          <td><strong>{c.name}</strong></td>
+                          <td>{c.email}</td>
+                          <td>{c.job_title}</td>
+                          <td><span className="badge badge-neutral">{c.stage}</span></td>
+                          <td>{new Date(c.stage_entered_at).toLocaleDateString()}</td>
+                          <td>{c.recruiter || "-"}</td>
+                        </tr>
+                      ));
+                    })()}
                   </tbody>
                 </table>
               </div>
+
+              {/* Responsive Pagination Bar for Candidates */}
+              {(() => {
+                const filteredCandidates = candidates.filter(
+                  (c) => !candidateStageFilter || c.stage === candidateStageFilter
+                );
+                const totalPages = Math.ceil(filteredCandidates.length / PAGE_SIZE);
+                if (totalPages <= 1) return null;
+
+                return (
+                  <div className="pagination-bar">
+                    <div className="pagination-info">
+                      Showing Page <strong>{candidatesPage}</strong> of <strong>{totalPages}</strong> ({filteredCandidates.length} total candidates)
+                    </div>
+                    <div className="pagination-controls">
+                      <button
+                        className="page-btn"
+                        disabled={candidatesPage === 1}
+                        onClick={() => setCandidatesPage((p) => Math.max(1, p - 1))}
+                      >
+                        &larr; Prev
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+                        <button
+                          key={num}
+                          className={`page-btn ${candidatesPage === num ? "active" : ""}`}
+                          onClick={() => setCandidatesPage(num)}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                      <button
+                        className="page-btn"
+                        disabled={candidatesPage === totalPages}
+                        onClick={() => setCandidatesPage((p) => Math.min(totalPages, p + 1))}
+                      >
+                        Next &rarr;
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </section>
         )}
 
         {/* TAB 3: DRAFTS & APPROVAL */}
         {activeTab === "drafts" && (
-          <section>
+          <section className="tab-pane-content">
             <div className="action-toolbar">
-              <span className="stat-label">
-                Human-in-the-Loop Approval Queue (Outbound messages require explicit review)
-              </span>
+              <div className="toolbar-left">
+                <label className="stat-label" style={{ margin: 0 }}>Draft Status:</label>
+                <select
+                  className="form-select"
+                  value={draftStatusFilter}
+                  onChange={(e) => {
+                    setDraftStatusFilter(e.target.value);
+                    setDraftsPage(1);
+                  }}
+                >
+                  <option value="">All Statuses</option>
+                  <option value="draft">Pending Review</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+              <div className="toolbar-right">
+                <span className="stat-label" style={{ margin: 0 }}>
+                  {drafts.filter((d) => !draftStatusFilter || d.status === draftStatusFilter).length} actions in queue
+                </span>
+              </div>
             </div>
 
             <div className="table-card">
@@ -414,14 +611,26 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {drafts.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
-                          No drafts created yet.
-                        </td>
-                      </tr>
-                    ) : (
-                      drafts.map((d) => (
+                    {(() => {
+                      const filteredDrafts = drafts.filter(
+                        (d) => !draftStatusFilter || d.status === draftStatusFilter
+                      );
+                      const paginatedDrafts = filteredDrafts.slice(
+                        (draftsPage - 1) * PAGE_SIZE,
+                        draftsPage * PAGE_SIZE
+                      );
+
+                      if (filteredDrafts.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={6} style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
+                              No drafts matching selected filter.
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return paginatedDrafts.map((d) => (
                         <tr key={d.id}>
                           <td><code>{d.id.slice(0, 8)}...</code></td>
                           <td>{d.action_type}</td>
@@ -452,18 +661,60 @@ export default function DashboardPage() {
                             )}
                           </td>
                         </tr>
-                      ))
-                    )}
+                      ));
+                    })()}
                   </tbody>
                 </table>
               </div>
+
+              {/* Responsive Pagination Bar for Drafts */}
+              {(() => {
+                const filteredDrafts = drafts.filter(
+                  (d) => !draftStatusFilter || d.status === draftStatusFilter
+                );
+                const totalPages = Math.ceil(filteredDrafts.length / PAGE_SIZE);
+                if (totalPages <= 1) return null;
+
+                return (
+                  <div className="pagination-bar">
+                    <div className="pagination-info">
+                      Showing Page <strong>{draftsPage}</strong> of <strong>{totalPages}</strong> ({filteredDrafts.length} total drafts)
+                    </div>
+                    <div className="pagination-controls">
+                      <button
+                        className="page-btn"
+                        disabled={draftsPage === 1}
+                        onClick={() => setDraftsPage((p) => Math.max(1, p - 1))}
+                      >
+                        &larr; Prev
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+                        <button
+                          key={num}
+                          className={`page-btn ${draftsPage === num ? "active" : ""}`}
+                          onClick={() => setDraftsPage(num)}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                      <button
+                        className="page-btn"
+                        disabled={draftsPage === totalPages}
+                        onClick={() => setDraftsPage((p) => Math.min(totalPages, p + 1))}
+                      >
+                        Next &rarr;
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </section>
         )}
 
         {/* TAB 4: RULES */}
         {activeTab === "rules" && (
-          <section>
+          <section className="tab-pane-content">
             <div className="action-toolbar">
               <span className="stat-label">Configurable Service Level Agreements (SLA Thresholds in Days)</span>
             </div>
@@ -518,9 +769,29 @@ export default function DashboardPage() {
 
         {/* TAB 5: AUDIT LOGS */}
         {activeTab === "audit" && (
-          <section>
+          <section className="tab-pane-content">
             <div className="action-toolbar">
-              <span className="stat-label">Immutable Audit Trail (Compliance & Security Governance)</span>
+              <div className="toolbar-left">
+                <label className="stat-label" style={{ margin: 0 }}>Action Type:</label>
+                <select
+                  className="form-select"
+                  value={auditActionFilter}
+                  onChange={(e) => {
+                    setAuditActionFilter(e.target.value);
+                    setAuditPage(1);
+                  }}
+                >
+                  <option value="">All Actions</option>
+                  {Array.from(new Set(auditLogs.map((l) => l.action))).map((act) => (
+                    <option key={act} value={act}>{act}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="toolbar-right">
+                <span className="stat-label" style={{ margin: 0 }}>
+                  {auditLogs.filter((l) => !auditActionFilter || l.action === auditActionFilter).length} events recorded
+                </span>
+              </div>
             </div>
 
             <div className="table-card">
@@ -536,18 +807,80 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {auditLogs.map((log) => (
-                      <tr key={log.id}>
-                        <td><small style={{ fontFamily: "var(--font-mono)" }}>{new Date(log.timestamp).toLocaleString()}</small></td>
-                        <td><strong>{log.actor}</strong></td>
-                        <td><span className="badge badge-neutral">{log.action}</span></td>
-                        <td>{log.entity_type} / <code>{log.entity_id}</code></td>
-                        <td><small style={{ color: "var(--text-secondary)" }}>{log.details || "-"}</small></td>
-                      </tr>
-                    ))}
+                    {(() => {
+                      const filteredAudit = auditLogs.filter(
+                        (l) => !auditActionFilter || l.action === auditActionFilter
+                      );
+                      const paginatedAudit = filteredAudit.slice(
+                        (auditPage - 1) * PAGE_SIZE,
+                        auditPage * PAGE_SIZE
+                      );
+
+                      if (filteredAudit.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={5} style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
+                              No audit events matching criteria.
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return paginatedAudit.map((log) => (
+                        <tr key={log.id}>
+                          <td><small style={{ fontFamily: "var(--font-mono)" }}>{new Date(log.timestamp).toLocaleString()}</small></td>
+                          <td><strong>{log.actor}</strong></td>
+                          <td><span className="badge badge-neutral">{log.action}</span></td>
+                          <td>{log.entity_type} / <code>{log.entity_id}</code></td>
+                          <td><small style={{ color: "var(--text-secondary)" }}>{log.details || "-"}</small></td>
+                        </tr>
+                      ));
+                    })()}
                   </tbody>
                 </table>
               </div>
+
+              {/* Responsive Pagination Bar for Audit Logs */}
+              {(() => {
+                const filteredAudit = auditLogs.filter(
+                  (l) => !auditActionFilter || l.action === auditActionFilter
+                );
+                const totalPages = Math.ceil(filteredAudit.length / PAGE_SIZE);
+                if (totalPages <= 1) return null;
+
+                return (
+                  <div className="pagination-bar">
+                    <div className="pagination-info">
+                      Showing Page <strong>{auditPage}</strong> of <strong>{totalPages}</strong> ({filteredAudit.length} total audit records)
+                    </div>
+                    <div className="pagination-controls">
+                      <button
+                        className="page-btn"
+                        disabled={auditPage === 1}
+                        onClick={() => setAuditPage((p) => Math.max(1, p - 1))}
+                      >
+                        &larr; Prev
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+                        <button
+                          key={num}
+                          className={`page-btn ${auditPage === num ? "active" : ""}`}
+                          onClick={() => setAuditPage(num)}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                      <button
+                        className="page-btn"
+                        disabled={auditPage === totalPages}
+                        onClick={() => setAuditPage((p) => Math.min(totalPages, p + 1))}
+                      >
+                        Next &rarr;
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </section>
         )}
