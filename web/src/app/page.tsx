@@ -198,14 +198,14 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="header-actions">
-          <button className="btn btn-sm tour-trigger-btn" onClick={() => setShowTour(true)}>
+          <button id="tour-step-explore-btn" className="btn btn-sm tour-trigger-btn" onClick={() => setShowTour(true)}>
             <span>Explore Tour</span>
           </button>
           <span className="api-key-pill">Key: dev-stall-alerter...</span>
-          <button className="btn btn-primary btn-sm" onClick={handleScan} disabled={isScanning}>
+          <button id="tour-step-scan-btn" className="btn btn-primary btn-sm" onClick={handleScan} disabled={isScanning}>
             {isScanning ? "Scanning..." : "Run Stall Scan"}
           </button>
-          <button className="btn btn-secondary btn-sm" onClick={() => setShowImportModal(true)}>
+          <button id="tour-step-import-btn" className="btn btn-secondary btn-sm" onClick={() => setShowImportModal(true)}>
             Import CSV
           </button>
         </div>
@@ -214,7 +214,7 @@ export default function DashboardPage() {
       {/* Main Container */}
       <main className="app-container">
         {/* Metrics Grid */}
-        <section className="metrics-grid">
+        <section id="tour-target-metrics" className="metrics-grid">
           <div className="stat-card">
             <div className="stat-label">Tracked Candidates</div>
             <div className="stat-value">{metrics.candidates_tracked}</div>
@@ -234,32 +234,37 @@ export default function DashboardPage() {
         </section>
 
         {/* Tab Navigation */}
-        <nav className="tab-navigation">
+        <nav id="tour-target-tabs" className="tab-navigation">
           <button
+            id="tab-btn-alerts"
             className={`nav-tab ${activeTab === "alerts" ? "active" : ""}`}
             onClick={() => setActiveTab("alerts")}
           >
             Overdue Alerts
           </button>
           <button
+            id="tab-btn-candidates"
             className={`nav-tab ${activeTab === "candidates" ? "active" : ""}`}
             onClick={() => setActiveTab("candidates")}
           >
             All Candidates
           </button>
           <button
+            id="tab-btn-drafts"
             className={`nav-tab ${activeTab === "drafts" ? "active" : ""}`}
             onClick={() => setActiveTab("drafts")}
           >
             Follow-up Drafts
           </button>
           <button
+            id="tab-btn-rules"
             className={`nav-tab ${activeTab === "rules" ? "active" : ""}`}
             onClick={() => setActiveTab("rules")}
           >
             Stage SLA Rules
           </button>
           <button
+            id="tab-btn-audit"
             className={`nav-tab ${activeTab === "audit" ? "active" : ""}`}
             onClick={() => setActiveTab("audit")}
           >
@@ -269,8 +274,8 @@ export default function DashboardPage() {
 
         {/* TAB 1: ALERTS */}
         {activeTab === "alerts" && (
-          <section className="tab-pane-content">
-            <div className="action-toolbar">
+          <section id="tour-target-alerts-section" className="tab-pane-content">
+            <div id="tour-target-alerts-toolbar" className="action-toolbar">
               <div className="toolbar-left">
                 <label className="stat-label" style={{ margin: 0 }}>Severity:</label>
                 <select
@@ -437,8 +442,8 @@ export default function DashboardPage() {
 
         {/* TAB 2: CANDIDATES */}
         {activeTab === "candidates" && (
-          <section className="tab-pane-content">
-            <div className="action-toolbar">
+          <section id="tour-target-candidates-section" className="tab-pane-content">
+            <div id="tour-target-candidates-toolbar" className="action-toolbar">
               <div className="toolbar-left">
                 <input
                   type="text"
@@ -577,8 +582,8 @@ export default function DashboardPage() {
 
         {/* TAB 3: DRAFTS & APPROVAL */}
         {activeTab === "drafts" && (
-          <section className="tab-pane-content">
-            <div className="action-toolbar">
+          <section id="tour-target-drafts-section" className="tab-pane-content">
+            <div id="tour-target-drafts-toolbar" className="action-toolbar">
               <div className="toolbar-left">
                 <label className="stat-label" style={{ margin: 0 }}>Draft Status:</label>
                 <select
@@ -719,8 +724,8 @@ export default function DashboardPage() {
 
         {/* TAB 4: RULES */}
         {activeTab === "rules" && (
-          <section className="tab-pane-content">
-            <div className="action-toolbar">
+          <section id="tour-target-rules-section" className="tab-pane-content">
+            <div id="tour-target-rules-toolbar" className="action-toolbar">
               <span className="stat-label">Configurable Service Level Agreements (SLA Thresholds in Days)</span>
             </div>
 
@@ -774,8 +779,8 @@ export default function DashboardPage() {
 
         {/* TAB 5: AUDIT LOGS */}
         {activeTab === "audit" && (
-          <section className="tab-pane-content">
-            <div className="action-toolbar">
+          <section id="tour-target-audit-section" className="tab-pane-content">
+            <div id="tour-target-audit-toolbar" className="action-toolbar">
               <div className="toolbar-left">
                 <label className="stat-label" style={{ margin: 0 }}>Action Type:</label>
                 <select

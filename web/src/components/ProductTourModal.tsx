@@ -1,99 +1,107 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useLayoutEffect } from "react";
 
 export interface TourStep {
+  targetId: string;
+  tabTarget?: "alerts" | "candidates" | "drafts" | "rules" | "audit";
   title: string;
   badge: string;
-  tabTarget?: "alerts" | "candidates" | "drafts" | "rules" | "audit";
   description: string;
   keyPoints: string[];
-  icon: string;
+  preferredPlacement?: "bottom" | "top" | "center";
 }
 
 const TOUR_STEPS: TourStep[] = [
   {
-    title: "Real-Time Pipeline SLA Metrics",
-    badge: "Step 1 of 6 • Executive Health",
+    targetId: "tour-step-scan-btn",
+    title: "1-Click Deterministic Stall Scan",
+    badge: "Step 1 of 7 • Engine Trigger",
     description:
-      "Get instant, high-level visibility across all active recruiting operations. The top dashboard aggregates candidate volume, active bottlenecks, and pending outreach actions.",
+      "Initiates the deterministic background audit scan across every candidate application in the database, evaluating stage dwell time against SLA limits.",
     keyPoints: [
-      "Total candidates actively tracked across all open requisitions.",
-      "Open Overdue Alerts categorized by deterministic UTC math.",
-      "Critical SLA Breaches (≥ 2.0x allowable stage limit) needing immediate recruiter triage.",
-      "Pending outreach drafts awaiting Human-in-the-Loop authorization.",
+      "Calculates UTC elapsed days deterministically (zero AI hallucinations).",
+      "Creates new alerts or automatically auto-resolves candidates who advanced.",
     ],
-    icon: "📊",
+    preferredPlacement: "bottom",
   },
   {
-    title: "Overdue Alerts Inbox & Triage",
-    badge: "Step 2 of 6 • Bottleneck Detection",
+    targetId: "tour-target-metrics",
+    title: "Pipeline Operations Pulse",
+    badge: "Step 2 of 7 • Executive Overview",
+    description:
+      "Aggregated real-time metrics showing total tracked candidates, open overdue stalls, critical breaches (≥ 2.0x allowable limit), and pending outreach drafts.",
+    keyPoints: [
+      "Immediate detection of critical bottlenecks requiring recruiter intervention.",
+      "Live stats refresh automatically following scans, imports, and draft approvals.",
+    ],
+    preferredPlacement: "bottom",
+  },
+  {
+    targetId: "tour-target-tabs",
+    title: "Workflow Navigation Center",
+    badge: "Step 3 of 7 • Domain Views",
+    description:
+      "Seamlessly toggle between operational workflows. Each view provides dedicated filters, custom pagination, and stateful tracking.",
+    keyPoints: [
+      "Overdue Alerts: Immediate triage and follow-up draft generation.",
+      "All Candidates: Comprehensive candidate search and stage tracking.",
+      "Follow-up Drafts: Human-in-the-Loop review and approval gateway.",
+      "SLA Rules & Audit: Dynamic policy customization and immutable audit trail.",
+    ],
+    preferredPlacement: "bottom",
+  },
+  {
+    targetId: "tour-target-alerts-toolbar",
     tabTarget: "alerts",
+    title: "Overdue Alerts Inbox & Filters",
+    badge: "Step 4 of 7 • Alerts Triage",
     description:
-      "Detect stagnant candidates early. The system continuously evaluates time spent in each pipeline stage against customizable SLAs.",
+      "Triage overdue candidates categorized by severity (Critical, High, Medium), resolution state, and hiring stage with responsive pagination.",
     keyPoints: [
-      "Severity Ranking: Critical (≥ 2.0x), High (≥ 1.5x), and Medium (≥ 1.0x).",
-      "Dynamic filtering by Severity, Resolution Status, and Pipeline Stage.",
-      "One-click 'Draft Follow-up' to kickstart personalized candidate re-engagement.",
-      "Deterministic calculation ensures fairness and eliminates LLM hallucinations.",
+      "Filter by Critical (≥ 2x SLA), High (≥ 1.5x SLA), and Medium (≥ 1x SLA).",
+      "One-click 'Draft Follow-up' opens candidate re-engagement workflow.",
     ],
-    icon: "🚨",
+    preferredPlacement: "bottom",
   },
   {
-    title: "Candidates Directory & Search",
-    badge: "Step 3 of 6 • Talent Repository",
+    targetId: "tour-target-candidates-toolbar",
     tabTarget: "candidates",
+    title: "Candidate Search & Pipeline Stage Filtering",
+    badge: "Step 5 of 7 • Talent Directory",
     description:
-      "A complete directory of all imported candidates with fast client-side query matching and stage categorization.",
+      "Search any candidate by full name, target role, or email, with dynamic stage filtering and paginated record navigation.",
     keyPoints: [
-      "Instant fuzzy search across candidate names, email addresses, and job titles.",
-      "Filter by specific hiring stages (e.g. Technical Interview, HM Screen).",
-      "Exact timestamps tracking when each candidate entered their current stage.",
-      "Pagination bar for clean browsing across high-volume pipelines.",
+      "Fast client-side fuzzy search across all active job postings.",
+      "Exact timestamps showing when candidate entered current stage.",
     ],
-    icon: "👥",
+    preferredPlacement: "bottom",
   },
   {
-    title: "Human-in-the-Loop Approval Queue",
-    badge: "Step 4 of 6 • Safety & Governance",
+    targetId: "tour-target-drafts-toolbar",
     tabTarget: "drafts",
+    title: "Human-in-the-Loop Approval Queue",
+    badge: "Step 6 of 7 • Safety & Governance Gate",
     description:
-      "A core safety pillar: Stall Alerter never sends autonomous emails to candidates without explicit recruiter review and approval.",
+      "Crucial AI Safety Boundary: Stall Alerter NEVER transmits autonomous communications. Outbound messages require explicit recruiter inspection, editing, and sign-off.",
     keyPoints: [
-      "AI/Rule-drafted follow-ups remain in 'draft' status until reviewed.",
-      "Inspect, edit, approve, or reject candidate communications in an interactive modal.",
-      "Eliminates embarrassing cold messaging and ensures consistent brand voice.",
-      "All approval decisions are cryptographically recorded into the audit log.",
+      "Recruiters review, personalize, and approve or reject drafted communications.",
+      "Decisions are immutably logged into the audit ledger for governance compliance.",
     ],
-    icon: "🛡️",
+    preferredPlacement: "bottom",
   },
   {
-    title: "Stage SLA Rules & Thresholds",
-    badge: "Step 5 of 6 • Custom Business Logic",
+    targetId: "tour-target-rules-toolbar",
     tabTarget: "rules",
+    title: "Configurable SLA Thresholds & Compliance",
+    badge: "Step 7 of 7 • SLA Engine Rules",
     description:
-      "Every hiring team moves at different speeds. Customize allowable time-in-stage limits per hiring phase with immediate recalculation.",
+      "Tailor allowable days per hiring phase (Resume Review, Screen, Interview, Offer). Edits take effect immediately on next stall scan.",
     keyPoints: [
-      "Configurable days for Resume Review, Phone Screen, Tech Interview, and Offer stages.",
-      "Supports weekend-exclusion calendar logic for realistic working-day SLAs.",
-      "Changes instantly propagate to the deterministic alert scanning engine.",
+      "Customizable thresholds in days with validation bounds.",
       "Protected by administrative authentication checks.",
     ],
-    icon: "⚙️",
-  },
-  {
-    title: "Immutable Audit Trail & Webhooks",
-    badge: "Step 6 of 6 • Enterprise Compliance",
-    tabTarget: "audit",
-    description:
-      "Full transparency and enterprise readiness. Every single state change, file ingestion, and decision is archived in an append-only log.",
-    keyPoints: [
-      "Chronological timeline of actors, actions, target entities, and payloads.",
-      "Filterable by action types (DRAFT, APPROVE, REJECT, IMPORT, UPDATE_SLA).",
-      "ATS Webhook receiver enables real-time synchronization with Greenhouse, Lever, and Workday.",
-      "Automated Slack & Microsoft Teams digest dispatching.",
-    ],
-    icon: "📜",
+    preferredPlacement: "bottom",
   },
 ];
 
@@ -105,31 +113,86 @@ interface ProductTourModalProps {
 
 export default function ProductTourModal({ isOpen, onClose, onSwitchTab }: ProductTourModalProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
+  const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number; placement: "top" | "bottom" | "center" }>({
+    top: 200,
+    left: 200,
+    placement: "bottom",
+  });
 
+  const step = TOUR_STEPS[currentStepIndex];
+
+  // When step changes, switch tab if needed and update target rect
   useEffect(() => {
-    if (isOpen) {
-      setCurrentStepIndex(0);
-      const firstTab = TOUR_STEPS[0].tabTarget;
-      if (firstTab && onSwitchTab) {
-        onSwitchTab(firstTab);
-      }
+    if (!isOpen) return;
+
+    if (step.tabTarget && onSwitchTab) {
+      onSwitchTab(step.tabTarget);
     }
-  }, [isOpen]);
+
+    const updateRect = () => {
+      const el = document.getElementById(step.targetId);
+      if (el) {
+        // Scroll target gently into view if needed
+        el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+        const rect = el.getBoundingClientRect();
+        setTargetRect(rect);
+
+        // Compute popover position
+        const popoverWidth = Math.min(window.innerWidth * 0.9, 460);
+        const popoverHeight = 300; // estimated
+        const margin = 16;
+
+        let left = rect.left + rect.width / 2 - popoverWidth / 2;
+        left = Math.max(margin, Math.min(window.innerWidth - popoverWidth - margin, left));
+
+        // Place below if space permits, else above
+        const spaceBelow = window.innerHeight - (rect.bottom + margin);
+        const spaceAbove = rect.top - margin;
+
+        let top = 0;
+        let placement: "top" | "bottom" | "center" = "bottom";
+
+        if (spaceBelow >= popoverHeight || spaceBelow >= spaceAbove) {
+          top = rect.bottom + margin;
+          placement = "bottom";
+        } else {
+          top = Math.max(margin, rect.top - popoverHeight - margin);
+          placement = "top";
+        }
+
+        setPopoverPos({ top, left, placement });
+      } else {
+        // Fallback center
+        setTargetRect(null);
+        setPopoverPos({
+          top: window.innerHeight / 2 - 160,
+          left: window.innerWidth / 2 - 230,
+          placement: "center",
+        });
+      }
+    };
+
+    // Allow slight delay for DOM tab switch to render
+    const t = setTimeout(updateRect, 120);
+    window.addEventListener("resize", updateRect);
+    window.addEventListener("scroll", updateRect, true);
+
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("resize", updateRect);
+      window.removeEventListener("scroll", updateRect, true);
+    };
+  }, [isOpen, currentStepIndex, step.targetId, step.tabTarget, onSwitchTab]);
 
   if (!isOpen) return null;
 
-  const currentStep = TOUR_STEPS[currentStepIndex];
   const isFirst = currentStepIndex === 0;
   const isLast = currentStepIndex === TOUR_STEPS.length - 1;
 
   const handleNext = () => {
     if (!isLast) {
-      const nextIndex = currentStepIndex + 1;
-      setCurrentStepIndex(nextIndex);
-      const nextTab = TOUR_STEPS[nextIndex].tabTarget;
-      if (nextTab && onSwitchTab) {
-        onSwitchTab(nextTab);
-      }
+      setCurrentStepIndex((prev) => prev + 1);
     } else {
       onClose();
     }
@@ -137,83 +200,78 @@ export default function ProductTourModal({ isOpen, onClose, onSwitchTab }: Produ
 
   const handlePrev = () => {
     if (!isFirst) {
-      const prevIndex = currentStepIndex - 1;
-      setCurrentStepIndex(prevIndex);
-      const prevTab = TOUR_STEPS[prevIndex].tabTarget;
-      if (prevTab && onSwitchTab) {
-        onSwitchTab(prevTab);
-      }
-    }
-  };
-
-  const jumpToStep = (index: number) => {
-    setCurrentStepIndex(index);
-    const targetTab = TOUR_STEPS[index].tabTarget;
-    if (targetTab && onSwitchTab) {
-      onSwitchTab(targetTab);
+      setCurrentStepIndex((prev) => prev - 1);
     }
   };
 
   return (
-    <div className="tour-modal-backdrop" onClick={onClose}>
+    <div className="spotlight-tour-overlay" onClick={onClose}>
+      {/* Dynamic Cutout Spotlight Box */}
+      {targetRect && (
+        <div
+          className="spotlight-cutout"
+          style={{
+            top: targetRect.top - 6,
+            left: targetRect.left - 6,
+            width: targetRect.width + 12,
+            height: targetRect.height + 12,
+          }}
+        />
+      )}
+
+      {/* Contextual Anchored Alert Popover */}
       <div
-        className="tour-modal-window"
+        className={`spotlight-popover placement-${popoverPos.placement}`}
+        style={{
+          top: popoverPos.top,
+          left: popoverPos.left,
+        }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="tour-dialog-title"
       >
         {/* Header */}
-        <div className="tour-modal-header">
-          <div className="tour-header-meta">
-            <span className="tour-badge">{currentStep.badge}</span>
-            <div className="tour-progress-pills">
-              {TOUR_STEPS.map((step, idx) => (
+        <div className="spotlight-header">
+          <div className="spotlight-badge-row">
+            <span className="spotlight-step-badge">{step.badge}</span>
+            <div className="spotlight-pills">
+              {TOUR_STEPS.map((_, idx) => (
                 <button
-                  key={step.title}
+                  key={idx}
                   type="button"
-                  aria-label={`Jump to ${step.title}`}
-                  className={`tour-pill-indicator ${idx === currentStepIndex ? "active" : idx < currentStepIndex ? "completed" : ""}`}
-                  onClick={() => jumpToStep(idx)}
+                  className={`spotlight-pill ${idx === currentStepIndex ? "active" : idx < currentStepIndex ? "done" : ""}`}
+                  onClick={() => setCurrentStepIndex(idx)}
                 />
               ))}
             </div>
           </div>
-          <button className="tour-close-btn" onClick={onClose} aria-label="Close Tour">
+          <button className="spotlight-close-btn" onClick={onClose} aria-label="Close tour">
             ✕
           </button>
         </div>
 
-        {/* Body Content */}
-        <div className="tour-modal-body">
-          <div className="tour-step-hero">
-            <div className="tour-icon-bubble">{currentStep.icon}</div>
-            <div className="tour-hero-text">
-              <h2 id="tour-dialog-title" className="tour-step-title">{currentStep.title}</h2>
-              <p className="tour-step-desc">{currentStep.description}</p>
-            </div>
-          </div>
+        {/* Body */}
+        <div className="spotlight-body">
+          <h3 className="spotlight-title">{step.title}</h3>
+          <p className="spotlight-desc">{step.description}</p>
 
-          <div className="tour-feature-highlights">
-            <h4 className="tour-highlights-heading">Key Capabilities & Architecture</h4>
-            <div className="tour-points-grid">
-              {currentStep.keyPoints.map((pt, i) => (
-                <div key={i} className="tour-point-card">
-                  <div className="tour-point-check">✓</div>
-                  <div className="tour-point-text">{pt}</div>
-                </div>
-              ))}
-            </div>
+          <div className="spotlight-points">
+            {step.keyPoints.map((pt, i) => (
+              <div key={i} className="spotlight-point-item">
+                <span className="spotlight-point-icon">✓</span>
+                <span>{pt}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="tour-modal-footer">
+        {/* Footer */}
+        <div className="spotlight-footer">
           <button className="btn btn-secondary btn-sm" onClick={onClose}>
-            Skip Tour
+            Exit Tour
           </button>
 
-          <div className="tour-nav-buttons">
+          <div className="spotlight-nav-actions">
             <button
               className="btn btn-secondary btn-sm"
               disabled={isFirst}
@@ -222,10 +280,10 @@ export default function ProductTourModal({ isOpen, onClose, onSwitchTab }: Produ
               ← Back
             </button>
             <button
-              className="btn btn-primary btn-sm tour-next-btn"
+              className="btn btn-primary btn-sm spotlight-next-btn"
               onClick={handleNext}
             >
-              {isLast ? "Finish Tour ✓" : "Next Feature →"}
+              {isLast ? "Complete Tour ✓" : "Next Feature →"}
             </button>
           </div>
         </div>
