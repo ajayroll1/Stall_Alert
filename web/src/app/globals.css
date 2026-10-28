@@ -762,57 +762,56 @@ table.ops-table tr:hover td {
 /* -----------------------------------------------------------------------------
    Interactive Spotlight Product Tour Styling & Animations (Exact Reference Design)
    ----------------------------------------------------------------------------- */
-.tour-trigger-wrapper {
-  position: relative;
+.tour-expand-pill-btn {
   display: inline-flex;
   align-items: center;
-}
-
-.tour-trigger-btn {
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-surface-subtle);
+  gap: 0;
+  height: 36px;
+  max-width: 38px;
+  padding: 0 9px;
+  background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
+  border-radius: 9999px;
   color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tour-trigger-btn:hover {
-  background-color: var(--accent-light);
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
-}
-
-.tour-tooltip {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  background-color: #111827;
-  color: #f9fafb;
-  font-size: 0.72rem;
-  font-weight: 500;
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
+  overflow: hidden;
   white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.18s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 100;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.tour-trigger-wrapper:hover .tour-tooltip {
+.tour-expand-pill-btn:hover {
+  max-width: 150px;
+  padding: 0 14px 0 10px;
+  gap: 0.5rem;
+  background-color: #f8fafc;
+  color: #2563eb;
+  border-color: #bfdbfe;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+}
+
+.tour-compass-icon {
+  flex-shrink: 0;
+  color: #3b82f6;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tour-expand-pill-btn:hover .tour-compass-icon {
+  transform: rotate(45deg);
+}
+
+.tour-expand-text {
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.22s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: -0.01em;
+}
+
+.tour-expand-pill-btn:hover .tour-expand-text {
   opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(0);
 }
 
 /* Dark Backdrop */
