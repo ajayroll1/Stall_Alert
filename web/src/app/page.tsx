@@ -289,9 +289,10 @@ export default function DashboardPage() {
         {activeTab === "alerts" && (
           <section id="tour-target-alerts-section" className="tab-pane-content">
             <div id="tour-target-alerts-toolbar" className="action-toolbar">
-              <div className="toolbar-left">
+              <div id="tour-alerts-filter-group" className="toolbar-left">
                 <label className="stat-label" style={{ margin: 0 }}>Severity:</label>
                 <select
+                  id="tour-alerts-severity-select"
                   className="form-select"
                   value={severityFilter}
                   onChange={(e) => {
@@ -307,6 +308,7 @@ export default function DashboardPage() {
 
                 <label className="stat-label" style={{ margin: 0, marginLeft: "0.5rem" }}>Status:</label>
                 <select
+                  id="tour-alerts-status-select"
                   className="form-select"
                   value={statusFilter}
                   onChange={(e) => {
@@ -321,6 +323,7 @@ export default function DashboardPage() {
 
                 <label className="stat-label" style={{ margin: 0, marginLeft: "0.5rem" }}>Stage:</label>
                 <select
+                  id="tour-alerts-stage-select"
                   className="form-select"
                   value={stageFilter}
                   onChange={(e) => {
@@ -335,13 +338,13 @@ export default function DashboardPage() {
                 </select>
               </div>
               <div className="toolbar-right">
-                <span className="stat-label" style={{ margin: 0 }}>
+                <span id="tour-alerts-counter" className="stat-label" style={{ margin: 0 }}>
                   {alerts.filter(a => !stageFilter || a.stage === stageFilter).length} alerts found
                 </span>
               </div>
             </div>
 
-            <div className="table-card">
+            <div id="tour-alerts-table-card" className="table-card">
               <div className="table-responsive">
                 <table className="ops-table">
                   <thead>
@@ -381,8 +384,8 @@ export default function DashboardPage() {
                         );
                       }
 
-                      return paginated.map((a) => (
-                        <tr key={a.id}>
+                      return paginated.map((a, index) => (
+                        <tr key={a.id} id={index === 0 ? "tour-alerts-first-row" : undefined}>
                           <td>
                             <span className={`badge badge-${a.severity}`}>{a.severity}</span>
                           </td>
@@ -397,6 +400,7 @@ export default function DashboardPage() {
                           <td>{a.recruiter || "Unassigned"}</td>
                           <td>
                             <button
+                              id={index === 0 ? "tour-alerts-draft-btn" : undefined}
                               className="btn btn-secondary btn-sm"
                               onClick={() => handleCreateDraft(a.id)}
                             >
@@ -417,7 +421,7 @@ export default function DashboardPage() {
                 if (totalPages <= 1) return null;
 
                 return (
-                  <div className="pagination-bar">
+                  <div id="tour-alerts-pagination" className="pagination-bar">
                     <div className="pagination-info">
                       Showing Page <strong>{alertsPage}</strong> of <strong>{totalPages}</strong> ({filtered.length} total alerts)
                     </div>
@@ -457,8 +461,9 @@ export default function DashboardPage() {
         {activeTab === "candidates" && (
           <section id="tour-target-candidates-section" className="tab-pane-content">
             <div id="tour-target-candidates-toolbar" className="action-toolbar">
-              <div className="toolbar-left">
+              <div id="tour-candidates-search-group" className="toolbar-left">
                 <input
+                  id="tour-candidates-search-input"
                   type="text"
                   className="form-input"
                   placeholder="Search by name, role or email..."
@@ -467,6 +472,7 @@ export default function DashboardPage() {
                   style={{ width: 260 }}
                 />
                 <button
+                  id="tour-candidates-search-btn"
                   className="btn btn-secondary btn-sm"
                   onClick={() => {
                     setCandidatesPage(1);
@@ -478,6 +484,7 @@ export default function DashboardPage() {
 
                 <label className="stat-label" style={{ margin: 0, marginLeft: "0.5rem" }}>Stage:</label>
                 <select
+                  id="tour-candidates-stage-select"
                   className="form-select"
                   value={candidateStageFilter}
                   onChange={(e) => {
@@ -492,13 +499,13 @@ export default function DashboardPage() {
                 </select>
               </div>
               <div className="toolbar-right">
-                <span className="stat-label" style={{ margin: 0 }}>
+                <span id="tour-candidates-counter" className="stat-label" style={{ margin: 0 }}>
                   {candidates.filter(c => !candidateStageFilter || c.stage === candidateStageFilter).length} candidates found
                 </span>
               </div>
             </div>
 
-            <div className="table-card">
+            <div id="tour-candidates-table-card" className="table-card">
               <div className="table-responsive">
                 <table className="ops-table">
                   <thead>
@@ -532,8 +539,8 @@ export default function DashboardPage() {
                         );
                       }
 
-                      return paginatedCandidates.map((c) => (
-                        <tr key={c.id}>
+                      return paginatedCandidates.map((c, index) => (
+                        <tr key={c.id} id={index === 0 ? "tour-candidates-first-row" : undefined}>
                           <td><code>{c.external_id}</code></td>
                           <td><strong>{c.name}</strong></td>
                           <td>{c.email}</td>
@@ -557,7 +564,7 @@ export default function DashboardPage() {
                 if (totalPages <= 1) return null;
 
                 return (
-                  <div className="pagination-bar">
+                  <div id="tour-candidates-pagination" className="pagination-bar">
                     <div className="pagination-info">
                       Showing Page <strong>{candidatesPage}</strong> of <strong>{totalPages}</strong> ({filteredCandidates.length} total candidates)
                     </div>
@@ -597,9 +604,10 @@ export default function DashboardPage() {
         {activeTab === "drafts" && (
           <section id="tour-target-drafts-section" className="tab-pane-content">
             <div id="tour-target-drafts-toolbar" className="action-toolbar">
-              <div className="toolbar-left">
+              <div id="tour-drafts-filter-group" className="toolbar-left">
                 <label className="stat-label" style={{ margin: 0 }}>Draft Status:</label>
                 <select
+                  id="tour-drafts-status-select"
                   className="form-select"
                   value={draftStatusFilter}
                   onChange={(e) => {
@@ -614,13 +622,13 @@ export default function DashboardPage() {
                 </select>
               </div>
               <div className="toolbar-right">
-                <span className="stat-label" style={{ margin: 0 }}>
+                <span id="tour-drafts-counter" className="stat-label" style={{ margin: 0 }}>
                   {drafts.filter((d) => !draftStatusFilter || d.status === draftStatusFilter).length} actions in queue
                 </span>
               </div>
             </div>
 
-            <div className="table-card">
+            <div id="tour-drafts-table-card" className="table-card">
               <div className="table-responsive">
                 <table className="ops-table">
                   <thead>
@@ -653,8 +661,8 @@ export default function DashboardPage() {
                         );
                       }
 
-                      return paginatedDrafts.map((d) => (
-                        <tr key={d.id}>
+                      return paginatedDrafts.map((d, index) => (
+                        <tr key={d.id} id={index === 0 ? "tour-drafts-first-row" : undefined}>
                           <td><code>{d.id.slice(0, 8)}...</code></td>
                           <td>{d.action_type}</td>
                           <td>
@@ -671,6 +679,7 @@ export default function DashboardPage() {
                           <td>
                             {d.status === "draft" ? (
                               <button
+                                id={index === 0 ? "tour-drafts-review-btn" : undefined}
                                 className="btn btn-primary btn-sm"
                                 onClick={() => {
                                   setReviewModalAction(d);
@@ -699,7 +708,7 @@ export default function DashboardPage() {
                 if (totalPages <= 1) return null;
 
                 return (
-                  <div className="pagination-bar">
+                  <div id="tour-drafts-pagination" className="pagination-bar">
                     <div className="pagination-info">
                       Showing Page <strong>{draftsPage}</strong> of <strong>{totalPages}</strong> ({filteredDrafts.length} total drafts)
                     </div>
@@ -742,7 +751,7 @@ export default function DashboardPage() {
               <span className="stat-label">Configurable Service Level Agreements (SLA Thresholds in Days)</span>
             </div>
 
-            <div className="table-card">
+            <div id="tour-rules-table-card" className="table-card">
               <div className="table-responsive">
                 <table className="ops-table">
                   <thead>
@@ -753,11 +762,12 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {rules.map((r) => (
-                      <tr key={r.stage}>
+                    {rules.map((r, index) => (
+                      <tr key={r.stage} id={index === 0 ? "tour-rules-first-row" : undefined}>
                         <td><strong>{r.stage}</strong></td>
                         <td>
                           <input
+                            id={index === 0 ? "tour-rules-input-field" : undefined}
                             type="number"
                             className="form-input"
                             defaultValue={r.max_days}
@@ -775,6 +785,7 @@ export default function DashboardPage() {
                         </td>
                         <td>
                           <button
+                            id={index === 0 ? "tour-rules-update-btn" : undefined}
                             className="btn btn-secondary btn-sm"
                             onClick={() => handleUpdateRule(r.stage)}
                           >
@@ -794,9 +805,10 @@ export default function DashboardPage() {
         {activeTab === "audit" && (
           <section id="tour-target-audit-section" className="tab-pane-content">
             <div id="tour-target-audit-toolbar" className="action-toolbar">
-              <div className="toolbar-left">
+              <div id="tour-audit-filter-group" className="toolbar-left">
                 <label className="stat-label" style={{ margin: 0 }}>Action Type:</label>
                 <select
+                  id="tour-audit-action-select"
                   className="form-select"
                   value={auditActionFilter}
                   onChange={(e) => {
@@ -811,13 +823,13 @@ export default function DashboardPage() {
                 </select>
               </div>
               <div className="toolbar-right">
-                <span className="stat-label" style={{ margin: 0 }}>
+                <span id="tour-audit-counter" className="stat-label" style={{ margin: 0 }}>
                   {auditLogs.filter((l) => !auditActionFilter || l.action === auditActionFilter).length} events recorded
                 </span>
               </div>
             </div>
 
-            <div className="table-card">
+            <div id="tour-audit-table-card" className="table-card">
               <div className="table-responsive">
                 <table className="ops-table">
                   <thead>
@@ -849,8 +861,8 @@ export default function DashboardPage() {
                         );
                       }
 
-                      return paginatedAudit.map((log) => (
-                        <tr key={log.id}>
+                      return paginatedAudit.map((log, index) => (
+                        <tr key={log.id} id={index === 0 ? "tour-audit-first-row" : undefined}>
                           <td><small style={{ fontFamily: "var(--font-mono)" }}>{new Date(log.timestamp).toLocaleString()}</small></td>
                           <td><strong>{log.actor}</strong></td>
                           <td><span className="badge badge-neutral">{log.action}</span></td>
@@ -872,7 +884,7 @@ export default function DashboardPage() {
                 if (totalPages <= 1) return null;
 
                 return (
-                  <div className="pagination-bar">
+                  <div id="tour-audit-pagination" className="pagination-bar">
                     <div className="pagination-info">
                       Showing Page <strong>{auditPage}</strong> of <strong>{totalPages}</strong> ({filteredAudit.length} total audit records)
                     </div>

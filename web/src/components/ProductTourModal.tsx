@@ -11,73 +11,205 @@ export interface TourStep {
 }
 
 const TOUR_STEPS: TourStep[] = [
+  // SECTION 0: GLOBAL DASHBOARD & LAUNCHERS
   {
     targetId: "tour-target-metrics",
     category: "Orientation & Executive Dashboard",
     title: "Pipeline Operations Pulse",
     description:
-      "Monitor total active candidates, open SLA alerts, and critical bottleneck warnings synchronized atomically with every ATS event and scan.",
+      "Real-time aggregated health metrics tracking candidate volume, open stalls, critical SLA breaches, and pending outreach drafts.",
   },
   {
     targetId: "tour-step-scan-btn",
     category: "Deterministic SLA Engine",
-    title: "Instant Dwell-Time Scan",
+    title: "1-Click Dwell-Time Scan",
     description:
-      "Execute instantaneous stall detection scans across all candidates with deterministic UTC math, avoiding LLM hallucinations.",
+      "Triggers the deterministic background audit scan across every active candidate in the pipeline using strict UTC math.",
   },
   {
     targetId: "tour-step-import-btn",
     category: "Ingestion & Security Gateway",
     title: "Candidate CSV Ingestion",
     description:
-      "Import candidate batches with formula injection sanitization, idempotent external ID deduplication, and streaming parsing.",
+      "Upload external candidate spreadsheets with built-in formula injection sanitization and idempotent external ID deduplication.",
   },
+
+  // SECTION 1: OVERDUE ALERTS (Complete In-Depth Breakdown)
   {
-    targetId: "tour-target-tabs",
-    category: "Navigation & Operations",
-    title: "Workflow Domain Switcher",
-    description:
-      "Seamlessly transition between Overdue Alerts, Candidate Directory, Human-in-the-Loop Approval Queue, SLA Rules, and Audit Logs.",
-  },
-  {
-    targetId: "tour-target-alerts-toolbar",
+    targetId: "tab-btn-alerts",
     tabTarget: "alerts",
     category: "Overdue Alerts Inbox",
-    title: "Multi-Dimensional Alert Filters",
+    title: "1. Overdue Alerts Navigation Tab",
     description:
-      "Filter overdue alerts by urgency (Critical ≥ 2x SLA, High ≥ 1.5x, Medium ≥ 1x), resolution state, and stage with responsive pagination.",
+      "Direct entry to the Overdue Alerts triage view where all stalled candidate applications are flagged and tracked.",
   },
   {
-    targetId: "tour-target-candidates-toolbar",
+    targetId: "tour-alerts-filter-group",
+    tabTarget: "alerts",
+    category: "Overdue Alerts Inbox",
+    title: "Multi-Dimensional Filters",
+    description:
+      "Slice overdue alerts by Urgency (Critical ≥ 2x SLA, High ≥ 1.5x, Medium ≥ 1x), Resolution Status (Open/Resolved), and Stage.",
+  },
+  {
+    targetId: "tour-alerts-table-card",
+    tabTarget: "alerts",
+    category: "Overdue Alerts Inbox",
+    title: "Bottleneck Table & Recruiter Routing",
+    description:
+      "Detailed candidate audit logs displaying candidate name, role, idle days in stage, and the assigned recruiter for ownership.",
+  },
+  {
+    targetId: "tour-alerts-draft-btn",
+    tabTarget: "alerts",
+    category: "Overdue Alerts Inbox",
+    title: "One-Click Outreach Draft Action",
+    description:
+      "Instantly initializes an AI-assisted follow-up email draft tailored to the candidate's exact stage and idle duration.",
+  },
+  {
+    targetId: "tour-alerts-pagination",
+    tabTarget: "alerts",
+    category: "Overdue Alerts Inbox",
+    title: "Alerts Pagination Controls",
+    description:
+      "Browse through large pipelines cleanly with compact 5-item pages, page indicators, and Prev/Next buttons.",
+  },
+
+  // SECTION 2: ALL CANDIDATES (Complete In-Depth Breakdown)
+  {
+    targetId: "tab-btn-candidates",
     tabTarget: "candidates",
     category: "Talent Directory",
-    title: "Fast Candidate Search & Stage Filtering",
+    title: "2. Candidates Directory Navigation Tab",
     description:
-      "Search any candidate by name, job role, or email with stage-specific filters and exact dwell-time entry timestamps.",
+      "Access the master candidate index representing all synchronized or imported applications across open roles.",
   },
   {
-    targetId: "tour-target-drafts-toolbar",
+    targetId: "tour-candidates-search-group",
+    tabTarget: "candidates",
+    category: "Talent Directory",
+    title: "Instant Search & Stage Dropdown",
+    description:
+      "Fuzzy search candidates by full name, job title, or email address, combined with hiring stage filtering.",
+  },
+  {
+    targetId: "tour-candidates-table-card",
+    tabTarget: "candidates",
+    category: "Talent Directory",
+    title: "Candidate Profiles & Dwell Tracking",
+    description:
+      "Tracks external ATS applicant IDs, target roles, current hiring stages, and exact timestamps when the stage was entered.",
+  },
+  {
+    targetId: "tour-candidates-pagination",
+    tabTarget: "candidates",
+    category: "Talent Directory",
+    title: "Candidates Directory Pagination",
+    description:
+      "Effortlessly navigate through hundreds of applicants without performance degradation or browser memory bloat.",
+  },
+
+  // SECTION 3: FOLLOW-UP DRAFTS & GOVERNANCE (Complete In-Depth Breakdown)
+  {
+    targetId: "tab-btn-drafts",
     tabTarget: "drafts",
     category: "Human-in-the-Loop Governance",
-    title: "Follow-up Approval Gateway",
+    title: "3. Follow-up Drafts Approval Queue",
     description:
-      "Review, personalize, and approve candidate re-engagement drafts. Autonomous outbound messaging is strictly locked behind human approval.",
+      "The essential AI safety gateway: No email leaves the system automatically. Recruiter inspection and approval are strictly required.",
   },
   {
-    targetId: "tour-target-rules-toolbar",
+    targetId: "tour-drafts-filter-group",
+    tabTarget: "drafts",
+    category: "Human-in-the-Loop Governance",
+    title: "Draft Status Filtering",
+    description:
+      "Filter generated communications by review status: 'Pending Review', 'Approved' (ready for transmission), or 'Rejected'.",
+  },
+  {
+    targetId: "tour-drafts-table-card",
+    tabTarget: "drafts",
+    category: "Human-in-the-Loop Governance",
+    title: "Communication Preview & Audit State",
+    description:
+      "Displays the generated draft body, creation timestamp, action type, and cryptographic audit identifier.",
+  },
+  {
+    targetId: "tour-drafts-review-btn",
+    tabTarget: "drafts",
+    category: "Human-in-the-Loop Governance",
+    title: "Review, Personalize & Authorize Modal",
+    description:
+      "Opens the full interactive review modal allowing recruiters to edit wording before explicitly approving or discarding.",
+  },
+  {
+    targetId: "tour-drafts-pagination",
+    tabTarget: "drafts",
+    category: "Human-in-the-Loop Governance",
+    title: "Draft Queue Pagination",
+    description:
+      "Organized view of queued communications ensuring recruiters never miss a pending candidate follow-up.",
+  },
+
+  // SECTION 4: STAGE SLA RULES (Complete In-Depth Breakdown)
+  {
+    targetId: "tab-btn-rules",
     tabTarget: "rules",
-    category: "Business Policy Engine",
-    title: "Configurable SLA Thresholds",
+    category: "SLA Policy Engine",
+    title: "4. Stage SLA Rules Configuration",
     description:
-      "Tailor allowable days per hiring phase with optional weekend-exclusion calendar logic. Changes apply immediately to subsequent scans.",
+      "Define operational velocity expectations across each hiring phase: Resume Review, Screen, Interview, and Offer.",
   },
   {
-    targetId: "tour-target-audit-toolbar",
+    targetId: "tour-rules-table-card",
+    tabTarget: "rules",
+    category: "SLA Policy Engine",
+    title: "SLA Threshold Editor",
+    description:
+      "Inline numeric inputs allow recruiting leaders to calibrate max allowable days per stage to match team bandwidth.",
+  },
+  {
+    targetId: "tour-rules-update-btn",
+    tabTarget: "rules",
+    category: "SLA Policy Engine",
+    title: "Instant Policy Recalculation",
+    description:
+      "Saving a new SLA rule immediately takes effect on the next stall scan and records an audit event in the security ledger.",
+  },
+
+  // SECTION 5: AUDIT LOGS (Complete In-Depth Breakdown)
+  {
+    targetId: "tab-btn-audit",
     tabTarget: "audit",
     category: "Compliance & Security",
-    title: "Immutable Audit Ledger",
+    title: "5. Immutable Audit Events Ledger",
     description:
-      "Cryptographically traceable append-only trail logging every actor, action, timestamp, and target entity for SOC2/ISO compliance.",
+      "An enterprise-grade append-only security log tracking every state change, decision, CSV import, and SLA modification.",
+  },
+  {
+    targetId: "tour-audit-filter-group",
+    tabTarget: "audit",
+    category: "Compliance & Security",
+    title: "Action Type Audit Filtering",
+    description:
+      "Quickly isolate specific events like 'CREATE_DRAFT', 'DECISION_APPROVE', 'UPDATE_SLA', or 'CSV_IMPORT'.",
+  },
+  {
+    targetId: "tour-audit-table-card",
+    tabTarget: "audit",
+    category: "Compliance & Security",
+    title: "Cryptographic Event Records",
+    description:
+      "Chronological ledger entries capturing precise UTC timestamps, actor identities, action verbs, and affected entity IDs.",
+  },
+  {
+    targetId: "tour-audit-pagination",
+    tabTarget: "audit",
+    category: "Compliance & Security",
+    title: "Audit History Pagination",
+    description:
+      "Provides full compliance navigability across thousands of historical audit events for SOC2 and ISO compliance reviews.",
   },
 ];
 
@@ -117,7 +249,7 @@ export default function ProductTourModal({ isOpen, onClose, onSwitchTab }: Produ
         const cardHeight = 240;
         const margin = 14;
 
-        // Horizontally center card with the element
+        // Horizontally center card with target element
         let left = rect.left + rect.width / 2 - cardWidth / 2;
         left = Math.max(margin, Math.min(window.innerWidth - cardWidth - margin, left));
 
