@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import FluidFooter from "../components/FluidFooter";
+import ProductTourModal from "../components/ProductTourModal";
 import {
   fetchMetrics,
   fetchAlerts,
@@ -19,6 +20,7 @@ import { AlertItem, AuditRecord, Candidate, FollowupAction, MetricSummary, SLARu
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<"alerts" | "candidates" | "drafts" | "rules" | "audit">("alerts");
+  const [showTour, setShowTour] = useState<boolean>(false);
 
   // Metrics
   const [metrics, setMetrics] = useState<MetricSummary>({
@@ -196,6 +198,9 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="header-actions">
+          <button className="btn btn-sm tour-trigger-btn" onClick={() => setShowTour(true)}>
+            <span>Explore Tour</span>
+          </button>
           <span className="api-key-pill">Key: dev-stall-alerter...</span>
           <button className="btn btn-primary btn-sm" onClick={handleScan} disabled={isScanning}>
             {isScanning ? "Scanning..." : "Run Stall Scan"}
@@ -950,6 +955,13 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Interactive Product Tour Modal */}
+      <ProductTourModal
+        isOpen={showTour}
+        onClose={() => setShowTour(false)}
+        onSwitchTab={(t) => setActiveTab(t)}
+      />
 
       {/* Fluid Antigravity Dynamic Footer */}
       <FluidFooter appName="Stall Alerter" tagline="Production Hiring Pipeline Monitoring & Recruiter Decision Support" />
