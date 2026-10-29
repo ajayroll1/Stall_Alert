@@ -5,6 +5,7 @@ import Link from "next/link";
 import FluidFooter from "../components/FluidFooter";
 
 export default function LandingHomePage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   // Interactive Simulation State in Section 4
   const [simStage, setSimStage] = useState<string>("Technical Interview");
   const [simDays, setSimDays] = useState<number>(7);
@@ -27,7 +28,7 @@ export default function LandingHomePage() {
       {/* -------------------------------------------------------------
           NAVIGATION BAR
       ------------------------------------------------------------- */}
-      <header className="app-header">
+      <header className="app-header" style={{ position: "sticky", top: 0, zIndex: 50 }}>
         <div className="brand-container">
           <img
             src="/stall-logo.svg"
@@ -42,7 +43,8 @@ export default function LandingHomePage() {
           </div>
         </div>
 
-        <nav style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
+        {/* Desktop Navigation */}
+        <nav className="hp-nav-desktop">
           <a href="#how-it-works" style={{ textDecoration: "none", color: "var(--text-secondary)", fontWeight: 500, fontSize: "0.95rem" }}>
             How It Works
           </a>
@@ -63,6 +65,68 @@ export default function LandingHomePage() {
             Launch Console →
           </Link>
         </nav>
+
+        {/* Mobile Menu Hamburger Button */}
+        <button
+          className="hp-mobile-menu-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle navigation menu"
+        >
+          {mobileMenuOpen ? (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          )}
+        </button>
+
+        {/* Mobile Dropdown Drawer */}
+        {mobileMenuOpen && (
+          <div className="hp-mobile-drawer">
+            <a
+              href="#how-it-works"
+              className="hp-mobile-nav-link"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              How It Works
+            </a>
+            <a
+              href="#features"
+              className="hp-mobile-nav-link"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Capabilities
+            </a>
+            <a
+              href="#simulator"
+              className="hp-mobile-nav-link"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Live SLA Sandbox
+            </a>
+            <a
+              href="#architecture"
+              className="hp-mobile-nav-link"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Integrations
+            </a>
+            <Link
+              href="/dashboard"
+              className="hp-btn-primary"
+              style={{ textAlign: "center", justifyContent: "center", marginTop: "0.5rem" }}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Launch Dashboard Console →
+            </Link>
+          </div>
+        )}
       </header>
 
       {/* -------------------------------------------------------------
