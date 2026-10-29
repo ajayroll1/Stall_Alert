@@ -1,158 +1,173 @@
-# STALL ALERTER — COMPLETE WORKING & ARCHITECTURE GUIDE (WORKING.md)
+# STALL ALERTER — COMPLETE WORKING & ARCHITECTURAL GUIDE (WORKING.md)
 
-इस गाइड में **Stall Alerter** के काम करने का पूरा तरीका (End-to-End Workflow) सबसे आसान भाषा (Simple Hinglish) में फ्लोचार्ट और डायग्राम्स के साथ समझाया गया है।
-
----
-
-## 1. मुख्य समस्या और उद्देश्य (Core Problem & Mission)
-
-### समस्या (The Problem):
-कंपनियों में जब हायरिंग चलती है, तो कई बार अच्छे कैंडिडेट्स का एप्लीकेशन किसी एक राउंड (जैसे: *Technical Interview* या *Screening*) में हफ्तों तक अटका (Stuck/Stalled) रह जाता है। 
-- रिक्रूटर्स भूल जाते हैं कि किसको फॉलो-अप करना है।
-- कैंडिडेट बोर होकर या ऑफर न मिलने पर दूसरी कंपनी जॉइन कर लेता है।
-
-### समाधान (The Solution — Stall Alerter):
-**Stall Alerter** एक ऐसा सिस्टम है जो:
-1. हायरिंग पाइपलाइन का डेटा (CSV या ATS) पढ़ता है।
-2. यह देखता है कि कौन सा कैंडिडेट अपनी तय समय सीमा (SLA - Service Level Agreement) से ज्यादा दिनों से अटका हुआ है।
-3. तुरंत प्रायोरिटी (Critical / High / Medium) के आधार पर अलर्ट बनाता है।
-4. रिक्रूटर के लिए 1-क्लिक में एक प्रोफेशनल फॉलो-अप ईमेल ड्राफ्ट तैयार करता है।
-5. रिक्रूटर जब अप्रूव (Approve) करता है, तभी एक्शन रिकॉर्ड होता है।
+This comprehensive guide details the complete end-to-end operational workflow, architectural data flows, and security boundaries of **Stall Alerter** in clear, structured English with visual flowcharts and state diagrams.
 
 ---
 
-## 2. हाई-लेवल एंड-टू-एंड फ्लोचार्ट (End-to-End Architecture Flow)
+## 1. Core Problem & Product Mission
+
+### The Problem:
+Recruiting teams at high-growth companies regularly lose top-tier candidates because applications get stuck ("stalled") in a specific interview stage without timely follow-up:
+- Interviewers delay submitting feedback, or hiring managers forget pending profiles.
+- Highly sought-after candidates become disengaged or accept competing offers.
+- Standard ATS tools lack deterministic, stage-level SLA breach alerts and require tedious manual pipeline auditing.
+
+### The Solution (Stall Alerter):
+**Stall Alerter** acts as an autonomous operational co-pilot for talent acquisition teams:
+1. Ingests candidate pipelines via universal ATS exports or direct integration webhooks.
+2. Applies stage-specific Service Level Agreements (SLAs).
+3. Deterministically computes elapsed dwell duration down to decimal days using UTC timestamps.
+4. Generates prioritized, deduplicated alerts ranked by operational urgency (Medium, High, Critical).
+5. Automatically prepares contextual, neutral follow-up communication drafts.
+6. Enforces a strict **Human-in-the-Loop** approval gate—ensuring zero automated actions leave the system without authorized recruiter sign-off.
+7. Logs every event into an immutable security audit trail.
+
+---
+
+## 2. End-to-End Architectural Data Flow
 
 ```mermaid
 flowchart TD
-    A["📂 1. Candidate Data Source (ATS / CSV File)"] --> B["⚙️ 2. Ingestion & Validation Engine (Formula Injection & Date Check)"]
-    B --> C[("💾 Candidate Database (Candidates Store)")]
+    A["📂 1. Candidate Data Source (ATS CSV / Webhook)"] --> B["⚙️ 2. Ingestion & Validation Engine\n(CSV Formula Sanitization & Schema Validation)"]
+    B --> C[("💾 Candidate Store (Relational DB)")]
     
-    D["⏱️ Configured SLA Rules (e.g. Tech Round = 5 Days)"] --> E["🔍 3. Stall Detection Scanner Engine"]
+    D["⏱️ Configured Stage SLAs\n(e.g., Tech Interview = 5.0 Days)"] --> E["🔍 3. Deterministic Stall Scanner"]
     C --> E
     
     E --> F{"Elapsed Days >= SLA Threshold?"}
-    F -- "No (On Track)" --> G["✅ Normal State (No Alert)"]
-    F -- "Yes (Overdue)" --> H["🚨 4. Priority Alert Generation"]
+    F -- "No (On Track)" --> G["🟢 Normal State (No Alert)"]
+    F -- "Yes (Overdue)" --> H["🚨 4. Priority Alert Engine"]
     
-    H --> I["Critical (>= 2x SLA)\nHigh (>= 1.5x SLA)\nMedium (>= 1x SLA)"]
-    I --> J["📋 5. Operations Dashboard Inbox"]
+    H --> I["Severity Tiering:\n• Critical (>= 2.0x SLA)\n• High (>= 1.5x SLA)\n• Medium (>= 1.0x SLA)"]
+    I --> J["📋 5. Operations Console Inbox (/dashboard)"]
     
-    J --> K["✍️ 6. 1-Click Neutral Follow-up Draft Generation"]
-    K --> L{"👤 7. Human Recruiter Review"}
+    J --> K["✍️ 6. 1-Click Contextual Follow-up Draft Generator"]
+    K --> L{"👤 7. Human Recruiter Approval Gate"}
     L -- "Edit / Reject" --> M["❌ Draft Discarded / Revised"]
-    L -- "Approve" --> N["✅ 8. Action Approved & Stored"]
+    L -- "Approve" --> N["✅ 8. Action Approved & Stored in Dispatch Queue"]
     
     N --> O["📝 9. Immutable Audit Event Log (Permanent Record)"]
 ```
 
 ---
 
-## 3. स्टेप-बाय-स्टेप वर्किंग प्रोसेस (Step-by-Step Working)
+## 3. Step-by-Step Technical Lifecycle
 
-### Step 1: कैंडिडेट डेटा इनपुट (Data Ingestion)
-- रिक्रूटर या ऑपरेशन्स टीम अपने ATS (Workday, Greenhouse, Lever) से CSV फ़ाइल एक्सपोर्ट करके डैशबोर्ड पर अपलोड करती है।
-- **सुरक्षा फ़िल्टर:** सिस्टम फ़ाइल को चेक करता है ताकि कोई वायरस या स्प्रेडशीट फॉर्मूला इंजेक्शन (`=cmd`, `@SUM`) न हो।
-- डेटाबेस में कैंडिडेट की आईडी, नाम, ईमेल, जॉब रोल, करंट स्टेज और स्टेज में एंटर करने की तारीख (`stage_entered_at`) सुरक्षित सेव हो जाती है।
-
-### Step 2: स्टेज-वाइज़ SLA नियम (SLA Threshold Rules)
-कंपनी हर स्टेज के लिए दिन तय करती है:
-- **Application Review:** 3 दिन
-- **Recruiter Screen:** 5 दिन
-- **Technical Interview:** 5 दिन
-- **Onsite Loop:** 7 दिन
-- **Offer Extended:** 3 दिन
-
-*(रिक्रूटर सेटिंग्स में जाकर इन दिनों को कभी भी बदल सकता है।)*
+### Step 1: Candidate Ingestion & Defensive Sanitization
+- **Source:** Recruiter uploads an ATS export (e.g., `candidates.csv`).
+- **Defensive Engineering:**
+  - Guards against **CSV Formula Injection** by prefixing cells starting with `=`, `+`, `-`, or `@` with a single quote.
+  - Validates ISO-8601 timestamps and ensures required headers (`external_id`, `name`, `email`, `stage`, `stage_entered_at`) are present.
+  - Employs idempotent upserts using the candidate's stable external ID to prevent duplicate records.
 
 ---
 
-### Step 3: स्टॉल स्कैनर और गणित (Deterministic Stall Calculation)
-सिस्टम किसी भी AI के अंदाज़े (Guess/Hallucination) पर निर्भर नहीं रहता। यह शुद्ध गणित (UTC Math) से हिसाब लगाता है:
+### Step 2: Dynamic Stage SLA Configuration
+Recruiting operations leaders configure maximum permissible dwell duration (in days) per hiring stage:
+- **Application Review:** 3.0 Days
+- **Recruiter Screen:** 5.0 Days
+- **Technical Interview:** 5.0 Days
+- **Onsite Loop:** 7.0 Days
+- **Offer Extended:** 3.0 Days
 
-$$\text{Elapsed Days} = \frac{\text{Current UTC Time} - \text{Stage Entered UTC Time}}{86400 \text{ seconds}}$$
+All SLA rule updates are persisted to the database and permanently logged with the updater's identity.
 
-उदाहरण: 
-- अगर किसी कैंडिडेट का *Technical Interview* में SLA = **5 दिन** है।
-- और वह **11 दिनों** से उसी स्टेज में है।
-- **11 दिन $\ge$ 5 दिन $\times$ 2.0**, तो सिस्टम इसे तुरंत **CRITICAL** अलर्ट मार्क कर देगा।
+---
 
-#### सेवेरिटी लेवल्स (Severity Scale):
+### Step 3: Deterministic Elapsed Days & Severity Algorithm
+Stall Alerter does **not** rely on probabilistic LLM guesswork to evaluate time or compliance. It utilizes precise mathematical evaluation:
+
+$$\text{Elapsed Days} = \max\left(0, \frac{\text{Current Time (UTC)} - \text{Stage Entered Time (UTC)}}{86400 \text{ seconds}}\right)$$
+
+#### Urgency Classification Rules:
 ```mermaid
 graph LR
-    A["0 to 4.9 Days\n🟢 Normal (Within SLA)"] --> B["5.0 to 7.4 Days\n🟡 Medium Alert (At SLA)"]
-    B --> C["7.5 to 9.9 Days\n🟠 High Alert (1.5x SLA)"]
-    C --> D["10+ Days\n🔴 Critical Alert (2.0x SLA)"]
+    A["0.0 to < SLA Days\n🟢 Normal (Within SLA)"] --> B["1.0x SLA Days\n🟡 Medium Urgency (At Threshold)"]
+    B --> C["1.5x SLA Days\n🟠 High Urgency (Breach Escalation)"]
+    C --> D["2.0x SLA Days\n🔴 Critical Urgency (Immediate Action)"]
 ```
 
----
-
-### Step 4: अलर्ट्स इनबॉक्स और प्रायोरिटी व्यू (Alerts Operations Inbox)
-- डैशबोर्ड पर रिक्रूटर को सबसे ऊपर वह कैंडिडेट्स दिखते हैं जिनका मामला सबसे ज्यादा गंभीर (Critical) है।
-- यहाँ कैंडिडेट का नाम, रोल, कितने दिन बीत चुके हैं, रिक्रूटर का नाम, और अगला सुझाव दिया जाता है।
-- बार-बार एक ही कैंडिडेट का डुप्लीकेट अलर्ट नहीं बनता (Deduplication Logic)।
+*Example:* If a candidate is in *Technical Interview* (SLA = 5 days) for 11 days, elapsed ratio is $11 / 5 = 2.2\times$, immediately generating a **CRITICAL** alert.
 
 ---
 
-### Step 5: 1-क्लिक फॉलो-अप ड्राफ्ट जेनरेशन (Follow-up Drafts)
-- अलर्ट के सामने **"Create Draft"** बटन दबाते ही सिस्टम तुरंत कैंडिडेट के लिए एक विनम्र और न्यूट्रल फॉलो-अप मैसेज बना देता है।
-- **मैसेज का प्रारूप:**
-  > *Subject: Update on your application for [Job Title] at our team*  
-  > *Dear [Candidate Name], thank you for interviewing for [Job Title]. We wanted to follow up regarding your [Stage]...*
+### Step 4: Alert Inbox & Automated Reconciliation
+- Alerts are grouped and sorted by severity (Critical first) and age.
+- **Reconciliation & Deduplication:** If a candidate transitions to a new stage in the ATS, the previous alert is automatically closed, and a new timer begins.
+- If days elapse further while in the same stage, the alert's severity dynamically upgrades (e.g., High $\rightarrow$ Critical) without creating spam duplicate rows.
 
 ---
 
-### Step 6: ह्यूमन अप्रूवल गेट — इंसान के हाथ में नियंत्रण (Human-in-the-Loop)
-**सबसे महत्वपूर्ण सुरक्षा नियम:** 
-- कोई भी AI या ऑटोमेशन बिना इंसान की मंजूरी के अपने आप कैंडिडेट को ईमेल नहीं भेज सकता।
-- रिक्रूटर ड्राफ्ट को पढ़ता है, चाहे तो टेक्स्ट को एडिट/कस्टमाइज कर सकता है।
-- जब रिक्रूटर **"Approve & Queue"** पर क्लिक करता है, तभी वह अप्रूव माना जाता है।
+### Step 5: 1-Click Contextual Follow-Up Draft Generation
+- Clicking **"Create Draft"** produces a courteous, neutral follow-up communication referencing the candidate's name, role, recruiter, and current interview step.
+- **Guardrail:** The draft never makes unauthorized commitments or reveals internal evaluation scores.
 
 ---
 
-### Step 7: अपरिवर्तनीय ऑडिट ट्रेल (Immutable Audit Trail)
-- हर एक्शन (किसने CSV अपलोड की, किसने नियम बदले, किसने अलर्ट स्कैन किया, किसने ईमेल अप्रूव किया) का टाइमस्टैम्प और नाम हमेशा के लिए ऑडिट टेबल में सुरक्षित रहता है।
-- इसे कोई सामान्य यूजर बदल या डिलीट नहीं कर सकता।
+### Step 6: Human-in-the-Loop Approval Gate (Safety Boundary)
+```mermaid
+stateDiagram-v2
+    [*] --> DraftCreated: Recruiter triggers draft
+    DraftCreated --> ReviewPending: Staged in Approval Queue
+    ReviewPending --> Revised: Recruiter edits draft text
+    Revised --> ReviewPending: Ready for decision
+    ReviewPending --> Rejected: Recruiter rejects/discards
+    ReviewPending --> Approved: Recruiter signs off
+    Approved --> [*]: Logged to Audit Trail
+    Rejected --> [*]: Discarded
+```
+
+**Zero Autonomous Dispatch Policy:** No outbound communication is ever transmitted without affirmative, authenticated human review and approval. Recruiters retain full editing control.
 
 ---
 
-## 4. सिस्टम कॉम्पोनेंट्स और टेक-स्टैक (System Architecture)
+### Step 7: Immutable Security & Audit Logging
+Every sensitive action writes an append-only event to the `audit_events` ledger:
+- `CSV_IMPORT`: Operator, row count, error summary.
+- `UPDATE_RULE`: Admin, modified stage, new threshold.
+- `SCAN_ALERTS`: Batch timestamp, new alerts generated, resolved alerts.
+- `CREATE_DRAFT`: Generated action ID, associated alert ID.
+- `ACTION_APPROVED`: Reviewer name, approval timestamp.
+
+---
+
+## 4. System Topology & Technology Stack
 
 ```mermaid
 graph TD
-    subgraph Frontend["🖥️ Modern Frontend (Port 3000)"]
-        UI1["Landing Homepage (7-Sections + Sketches)"]
-        UI2["Operations Console (/dashboard)"]
-        UI3["Interactive SLA Sandbox Simulator"]
-        UI4["Product Tour & Fluid Animated Footer"]
+    subgraph Client["🖥️ Presentation Layer (Port 3000)"]
+        FE1["Next.js 16 (App Router)"]
+        FE2["React 19 + TypeScript"]
+        FE3["Executive Warm B2B Theme & Pencil Sketch Assets"]
+        FE4["Interactive SLA Sandbox Simulator"]
     end
 
-    subgraph Backend["⚡ Robust Backend (Port 8000)"]
-        API1["FastAPI Application (app/main.py)"]
-        API2["Pydantic Data Validators"]
-        API3["Deterministic Math Engine (compute_elapsed_days)"]
-        API4["Audit Logger (log_audit)"]
+    subgraph Service["⚡ Application Layer (Port 8000)"]
+        BE1["FastAPI (Python 3.14)"]
+        BE2["Pydantic Data Schemas"]
+        BE3["Deterministic SLA Engine"]
+        BE4["API Key Security Guard (X-API-Key)"]
     end
 
-    subgraph Storage["💾 Persistence Layer"]
-        DB[("SQLite / PostgreSQL\n(candidates, alerts, rules, actions, audit_events)")]
+    subgraph Persistence["💾 Data Layer"]
+        DB[("Relational Store (SQLite / PostgreSQL)\nTables: candidates, alerts, rules, actions, audit_events")]
     end
 
-    Frontend <-->|"REST APIs with X-API-Key Auth"| Backend
-    Backend <--> Storage
+    Client <-->|"REST API Requests / TLS"| Service
+    Service <--> Persistence
 ```
 
 ---
 
-## 5. समरी (Executive Summary)
+## 5. Operations Summary Matrix
 
-| स्टेप | क्या होता है? | कौन करता है? |
-| :--- | :--- | :--- |
-| **1. डेटा इनपुट** | CSV फ़ाइल अपलोड होती है, डेटाबेस में सेव होती है | रिक्रूटर |
-| **2. चेकिंग** | टाइमस्टैम्प के हिसाब से SLA के उल्लंघन की जाँच | ऑटोमेटेड बैकएंड इंजन |
-| **3. अलर्टिंग** | Critical, High, Medium प्रायोरिटी इनबॉक्स में दिखती है | डैशबोर्ड UI |
-| **4. ड्राफ्ट** | कैंडिडेट के लिए फॉलो-अप ईमेल तैयार होता है | सिस्टम एल्गोरिथम |
-| **5. अप्रूवल** | रिक्रूटर पढ़कर एडिट या अप्रूव करता है | मानव (Recruiter) |
-| **6. ऑडिट** | पूरे काम का सबूत और रिकॉर्ड सेव होता है | ऑडिट इंजन |
+| Phase | Core Action | Execution Agent | Security & Integrity Control |
+| :--- | :--- | :--- | :--- |
+| **1. Ingestion** | Parse CSV / Webhook data | System Service | Formula injection escaping & schema validation |
+| **2. SLA Audit** | Compute dwell time vs. thresholds | Deterministic Math Engine | UTC timestamps; zero model hallucination |
+| **3. Prioritization** | Rank alerts by urgency | Alert Dispatcher | Automatic deduplication & state reconciliation |
+| **4. Drafting** | Prepare follow-up messages | Template Engine | Neutral, non-binding communication standards |
+| **5. Authorization** | Approve or reject actions | Human Recruiter | Mandatory Human-in-the-Loop approval gate |
+| **6. Accountability** | Record audit log | Audit Engine | Tamper-evident, immutable activity tracking |
 
-इस प्रकार **Stall Alerter** रिक्रूटर्स का समय बचाता है, किसी भी कैंडिडेट को पाइपलाइन में भूलने नहीं देता, और हायरिंग प्रक्रिया को 10 गुना तेज और पारदर्शी बनाता है।
+This architecture ensures high-volume hiring pipelines maintain momentum, eliminates candidate ghosting, and protects organizational compliance through rigorous human governance.
