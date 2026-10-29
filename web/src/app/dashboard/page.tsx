@@ -193,13 +193,13 @@ export default function DashboardPage() {
     <div>
       {/* Top Header */}
       <header className="app-header">
-        <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
+        <div className="header-left-group">
           <Link href="/" className="brand-container" style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}>
             <img
               src="/stall-logo.svg"
               alt="Stall Alerter Logo"
-              width={34}
-              height={34}
+              width={32}
+              height={32}
               className="header-logo-img"
             />
             <div>
@@ -211,25 +211,13 @@ export default function DashboardPage() {
           <Link
             href="/"
             className="home-link-pill"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.35rem",
-              textDecoration: "none",
-              color: "var(--text-secondary)",
-              fontSize: "0.82rem",
-              fontWeight: 600,
-              padding: "0.3rem 0.75rem",
-              borderRadius: "9999px",
-              backgroundColor: "var(--bg-surface-subtle)",
-              border: "1px solid var(--border-subtle)"
-            }}
+            aria-label="Back to Homepage"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
               <polyline points="9 22 9 12 15 12 15 22"></polyline>
             </svg>
-            <span>Home</span>
+            <span className="home-link-text">Home</span>
           </Link>
         </div>
 
@@ -242,8 +230,8 @@ export default function DashboardPage() {
           >
             <svg
               className="tour-compass-icon"
-              width="17"
-              height="17"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -261,13 +249,14 @@ export default function DashboardPage() {
             id="tour-step-import-btn"
             className="btn btn-secondary btn-sm header-action-btn"
             onClick={() => setShowImportModal(true)}
+            aria-label="Import CSV"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="17 8 12 3 7 8"></polyline>
               <line x1="12" y1="3" x2="12" y2="15"></line>
             </svg>
-            <span>Import CSV</span>
+            <span className="btn-label-text">Import CSV</span>
           </button>
 
           <button
@@ -275,13 +264,14 @@ export default function DashboardPage() {
             className="btn btn-primary btn-sm header-action-btn"
             onClick={handleScan}
             disabled={isScanning}
+            aria-label="Run Stall Scan"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="23 4 23 10 17 10"></polyline>
               <polyline points="1 20 1 14 7 14"></polyline>
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
             </svg>
-            <span>{isScanning ? "Scanning..." : "Run Stall Scan"}</span>
+            <span className="btn-label-text">{isScanning ? "Scanning..." : "Run Stall Scan"}</span>
           </button>
         </div>
       </header>
