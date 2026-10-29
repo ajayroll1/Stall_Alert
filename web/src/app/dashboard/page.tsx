@@ -193,33 +193,19 @@ export default function DashboardPage() {
     <div>
       {/* Top Header */}
       <header className="app-header">
-        <div className="header-left-group">
-          <Link href="/" className="brand-container" style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}>
-            <img
-              src="/stall-logo.svg"
-              alt="Stall Alerter Logo"
-              width={32}
-              height={32}
-              className="header-logo-img"
-            />
-            <div>
-              <span className="brand-title">Stall Alerter</span>
-              <span className="brand-subtitle">Pipeline Operations Console</span>
-            </div>
-          </Link>
-
-          <Link
-            href="/"
-            className="home-link-pill"
-            aria-label="Back to Homepage"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-            <span className="home-link-text">Home</span>
-          </Link>
-        </div>
+        <Link href="/" className="brand-container" style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}>
+          <img
+            src="/stall-logo.svg"
+            alt="Stall Alerter Logo"
+            width={34}
+            height={34}
+            className="header-logo-img"
+          />
+          <div>
+            <span className="brand-title">Stall Alerter</span>
+            <span className="brand-subtitle">Pipeline Operations Console</span>
+          </div>
+        </Link>
 
         <div className="header-actions">
           <button
@@ -227,6 +213,7 @@ export default function DashboardPage() {
             className="tour-expand-pill-btn"
             onClick={() => setShowTour(true)}
             aria-label="Product Tour"
+            title="Product Tour"
           >
             <svg
               className="tour-compass-icon"
@@ -245,33 +232,37 @@ export default function DashboardPage() {
             <span className="tour-expand-text">Tour</span>
           </button>
 
+          {/* Import CSV - Icon with Expand on Hover */}
           <button
             id="tour-step-import-btn"
-            className="btn btn-secondary btn-sm header-action-btn"
+            className="btn btn-secondary btn-icon-expand"
             onClick={() => setShowImportModal(true)}
+            title="Import CSV Export"
             aria-label="Import CSV"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="17 8 12 3 7 8"></polyline>
               <line x1="12" y1="3" x2="12" y2="15"></line>
             </svg>
-            <span className="btn-label-text">Import CSV</span>
+            <span className="expand-text">Import CSV</span>
           </button>
 
+          {/* Run Stall Scan - Icon with Expand on Hover */}
           <button
             id="tour-step-scan-btn"
-            className="btn btn-primary btn-sm header-action-btn"
+            className="btn btn-primary btn-icon-expand"
             onClick={handleScan}
             disabled={isScanning}
+            title="Run Stall Scan"
             aria-label="Run Stall Scan"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="23 4 23 10 17 10"></polyline>
               <polyline points="1 20 1 14 7 14"></polyline>
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
             </svg>
-            <span className="btn-label-text">{isScanning ? "Scanning..." : "Run Stall Scan"}</span>
+            <span className="expand-text">{isScanning ? "Scanning..." : "Run Stall Scan"}</span>
           </button>
         </div>
       </header>
