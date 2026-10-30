@@ -28,7 +28,10 @@ API_KEY = os.getenv("STALL_ALERTER_API_KEY", DEFAULT_API_KEY)
 DB_PATH = os.getenv("DATABASE_PATH", "stall_alerter.db")
 
 # Strict Origin allowlist (eliminating wildcards for production security)
-ALLOWED_ORIGINS_RAW = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://127.0.0.1:8000,http://localhost:8000")
+ALLOWED_ORIGINS_RAW = os.getenv(
+    "ALLOWED_ORIGINS", 
+    "http://localhost:3000,http://127.0.0.1:3000,http://127.0.0.1:8000,http://localhost:8000,*"
+)
 ALLOWED_ORIGINS = [orig.strip() for orig in ALLOWED_ORIGINS_RAW.split(",") if orig.strip()]
 
 API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
