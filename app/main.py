@@ -644,7 +644,7 @@ def list_actions(status_filter: Optional[str] = None, _: str = Depends(verify_ap
 def approve_action(action_id: str, payload: ApprovalRequest, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Enforce human-in-the-loop governance: record approval or rejection of an outbound draft.
-    Does not silently send external communications without explicit approval.
+    When approved, dispatches the email via SMTP if candidate email is valid.
     """
     conn = get_db_connection()
     action = conn.execute("SELECT * FROM actions WHERE id = ?", (action_id,)).fetchone()
@@ -652,12 +652,30 @@ def approve_action(action_id: str, payload: ApprovalRequest, _: str = Depends(ve
         conn.close()
         raise HTTPException(status_code=404, detail="Action not found.")
 
+    candidate = conn.execute("SELECT * FROM candidates WHERE id = ?", (action["candidate_id"],)).fetchone()
     now_iso = datetime.now(timezone.utc).isoformat()
     new_status = payload.decision
+    dispatch_result = None
+
+    if new_status == "approved" and candidate and candidate["email"]:
+        from app.email_service import send_approved_candidate_email
+        subject = f"Update regarding your application for {candidate['job_title']}"
+        dispatch_result = send_approved_candidate_email(
+            candidate_email=candidate["email"],
+            candidate_name=candidate["name"],
+            subject=subject,
+            body_text=action["draft"],
+            reviewer_name=payload.reviewer or "Recruiting Operations"
+        )
 
     conn.execute(
-        "UPDATE actions SET status = ?, approved_at = ? WHERE id = ?",
-        (new_status, now_iso if new_status == "approved" else None, action_id),
+        "UPDATE actions SET status = ?, approved_at = ?, executed_at = ? WHERE id = ?",
+        (
+            new_status,
+            now_iso if new_status == "approved" else None,
+            now_iso if (dispatch_result and dispatch_result.get("status") == "sent") else None,
+            action_id
+        ),
     )
     log_audit(
         conn,
@@ -665,7 +683,7 @@ def approve_action(action_id: str, payload: ApprovalRequest, _: str = Depends(ve
         action=f"ACTION_{payload.decision.upper()}",
         entity_type="action",
         entity_id=action_id,
-        details=f"status set to {new_status}",
+        details=f"status set to {new_status}, email_dispatch={dispatch_result.get('status') if dispatch_result else 'none'}",
     )
     conn.commit()
     conn.close()
@@ -675,6 +693,7 @@ def approve_action(action_id: str, payload: ApprovalRequest, _: str = Depends(ve
         "status": new_status,
         "decision": payload.decision,
         "timestamp": now_iso,
+        "email_delivery": dispatch_result,
     }
 
 @app.get("/api/audit-events", response_model=List[AuditLogEntry], tags=["Audit"])
@@ -761,31 +780,61 @@ def receive_ats_webhook(payload: WebhookPayload, _: str = Depends(verify_api_key
     }
 
 class NotificationTestPayload(BaseModel):
-    channel: str = Field("slack", pattern="^(slack|teams|email)$")
+    channel: str = Field("email", pattern="^(slack|teams|email)$")
     webhook_url: Optional[str] = None
+    recipient_email: Optional[str] = None
 
 @app.post("/api/integrations/notifications/test", tags=["Integrations"])
 def send_notification_digest(payload: NotificationTestPayload, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
-    Dispatches a proactive pipeline digest to Slack, Microsoft Teams, or Email.
+    Dispatches a proactive pipeline digest to Slack, Microsoft Teams, or via verified SMTP Email.
     """
     conn = get_db_connection()
     critical_alerts = conn.execute("SELECT COUNT(*) FROM alerts WHERE status = 'open' AND severity = 'critical'").fetchone()[0]
     high_alerts = conn.execute("SELECT COUNT(*) FROM alerts WHERE status = 'open' AND severity = 'high'").fetchone()[0]
     total_open = conn.execute("SELECT COUNT(*) FROM alerts WHERE status = 'open'").fetchone()[0]
     
-    log_audit(conn, actor="operator", action="DISPATCH_NOTIFICATION", entity_type="notification_channel", entity_id=payload.channel, details=f"sent digest: {total_open} open alerts")
+    rows = conn.execute("""
+        SELECT a.id, a.stage, a.days_in_stage, a.severity, c.name as candidate_name, c.job_title, c.email
+        FROM alerts a
+        JOIN candidates c ON a.candidate_id = c.id
+        WHERE a.status = 'open'
+        ORDER BY a.days_in_stage DESC
+        LIMIT 10
+    """).fetchall()
+    overdue_candidates = [dict(r) for r in rows]
+
+    email_delivery = None
+    if payload.channel == "email":
+        from app.email_service import send_recruiter_digest_email
+        target_email = payload.recipient_email or os.getenv("SMTP_USER", "ajaymahto2580@gmail.com")
+        email_delivery = send_recruiter_digest_email(
+            to_email=target_email,
+            total_open=total_open,
+            critical_count=critical_alerts,
+            high_count=high_alerts,
+            overdue_candidates=overdue_candidates
+        )
+
+    log_audit(
+        conn,
+        actor="operator",
+        action="DISPATCH_NOTIFICATION",
+        entity_type="notification_channel",
+        entity_id=payload.channel,
+        details=f"sent digest: {total_open} open alerts, delivery={email_delivery.get('status') if email_delivery else 'n/a'}"
+    )
     conn.commit()
     conn.close()
 
     return {
         "channel": payload.channel,
         "status": "dispatched",
+        "email_delivery": email_delivery,
         "summary": {
             "total_open_alerts": total_open,
             "critical": critical_alerts,
             "high": high_alerts,
         },
-        "message": f"🚨 [Stall Alerter Alert] {total_open} candidate applications currently exceed SLA thresholds ({critical_alerts} Critical). Check dashboard at http://localhost:3000"
+        "message": f"Pipeline digest dispatched with {total_open} open alerts ({critical_alerts} Critical)."
     }
-
