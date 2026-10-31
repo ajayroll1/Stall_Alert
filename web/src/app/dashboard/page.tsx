@@ -634,30 +634,13 @@ export default function DashboardPage() {
                           <td><strong>{a.days_in_stage.toFixed(1)}</strong> days</td>
                           <td>{a.recruiter || "Unassigned"}</td>
                           <td>
-                            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                              <button
-                                id={index === 0 ? "tour-alerts-draft-btn" : undefined}
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => handleCreateDraft(a.id)}
-                              >
-                                Draft Follow-up
-                              </button>
-                              <button
-                                className="btn btn-sm"
-                                style={{
-                                  background: "transparent",
-                                  border: "1px solid var(--border-subtle, #e2e8f0)",
-                                  color: "var(--text-muted, #94a3b8)",
-                                  padding: "0.25rem 0.5rem",
-                                  cursor: "pointer",
-                                  borderRadius: "4px"
-                                }}
-                                title="Dismiss/Delete Alert"
-                                onClick={() => handleDeleteAlert(a.id)}
-                              >
-                                ✕
-                              </button>
-                            </div>
+                            <button
+                              id={index === 0 ? "tour-alerts-draft-btn" : undefined}
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => handleCreateDraft(a.id)}
+                            >
+                              Draft Follow-up
+                            </button>
                           </td>
                         </tr>
                       ));
@@ -819,7 +802,6 @@ export default function DashboardPage() {
                       <th>Stage</th>
                       <th>Stage Entered</th>
                       <th>Recruiter</th>
-                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -835,7 +817,7 @@ export default function DashboardPage() {
                       if (filteredCandidates.length === 0) {
                         return (
                           <tr>
-                            <td colSpan={isCandidateDeleteMode ? 9 : 8} style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
+                            <td colSpan={isCandidateDeleteMode ? 8 : 7} style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
                               No candidates found matching criteria.
                             </td>
                           </tr>
@@ -868,16 +850,6 @@ export default function DashboardPage() {
                           <td><span className="badge badge-neutral">{c.stage}</span></td>
                           <td>{new Date(c.stage_entered_at).toLocaleDateString()}</td>
                           <td>{c.recruiter || "-"}</td>
-                          <td>
-                            <button
-                              className="btn btn-sm btn-danger"
-                              style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
-                              onClick={() => handleDeleteCandidate(c.id, c.name)}
-                              title="Delete candidate"
-                            >
-                              Delete
-                            </button>
-                          </td>
                         </tr>
                       ));
                     })()}
