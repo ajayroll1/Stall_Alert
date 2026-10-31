@@ -57,14 +57,37 @@ export async function submitApprovalDecision(
   actionId: string,
   decision: "approved" | "rejected",
   reviewer = "talent_lead",
-  editedDraft?: string
+  editedDraft?: string,
+  nextStage?: string
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/api/actions/${actionId}/approval`, {
     method: "POST",
     headers: { ...defaultHeaders, "Content-Type": "application/json" },
-    body: JSON.stringify({ decision, reviewer, edited_draft: editedDraft }),
+    body: JSON.stringify({
+      decision,
+      reviewer,
+      edited_draft: editedDraft,
+      next_stage: nextStage || null
+    }),
   });
   if (!res.ok) throw new Error("Failed to submit approval decision");
+}
+
+export async function updateCandidateStage(
+  candidateId: string,
+  stage: string,
+  reviewer = "talent_lead"
+): Promise<{ candidate_id: string; message: string }> {
+  const res = await fetch(`${API_BASE}/api/candidates/${candidateId}/stage`, {
+    method: "PATCH",
+    headers: { ...defaultHeaders, "Content-Type": "application/json" },
+    body: JSON.stringify({ stage, reviewer }),
+  });
+  if (!res.ok) {
+    const errorJson = await res.json().catch(() => ({ detail: "Failed to update stage" }));
+    throw new Error(errorJson.detail || "Failed to update candidate stage");
+  }
+  return res.json();
 }
 
 export async function deleteCandidate(candidateId: string): Promise<void> {

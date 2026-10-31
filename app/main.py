@@ -223,6 +223,11 @@ class ApprovalRequest(BaseModel):
     decision: str = Field(..., pattern="^(approved|rejected)$")
     reviewer: Optional[str] = "recruiter_lead"
     edited_draft: Optional[str] = None
+    next_stage: Optional[str] = None
+
+class CandidateStageUpdateRequest(BaseModel):
+    stage: str = Field(..., min_length=1)
+    reviewer: Optional[str] = "recruiter_lead"
 
 class DeleteBulkRequest(BaseModel):
     ids: List[str] = Field(..., min_length=1)
@@ -700,6 +705,24 @@ def approve_action(action_id: str, payload: ApprovalRequest, _: str = Depends(ve
     else:
         conn.execute("UPDATE alerts SET status = 'resolved', resolved_at = ? WHERE candidate_id = ? AND status = 'open'", (now_iso, action["candidate_id"]))
 
+    # Advance candidate stage if requested in approval decision
+    stage_advanced = False
+    if payload.next_stage and payload.next_stage.strip():
+        new_stage_clean = payload.next_stage.strip()
+        conn.execute(
+            "UPDATE candidates SET stage = ?, stage_entered_at = ? WHERE id = ?",
+            (new_stage_clean, now_iso, action["candidate_id"])
+        )
+        stage_advanced = True
+        log_audit(
+            conn,
+            actor=payload.reviewer or "reviewer",
+            action="UPDATE_CANDIDATE_STAGE",
+            entity_type="candidate",
+            entity_id=action["candidate_id"],
+            details=f"advanced stage to '{new_stage_clean}' on followup approval; idle timer reset to 0.0 days"
+        )
+
     log_audit(
         conn,
         actor=payload.reviewer or "reviewer",
@@ -866,6 +889,64 @@ def send_notification_digest(payload: NotificationTestPayload, _: str = Depends(
 # -----------------------------------------------------------------------------
 # Deletion & Pipeline Governance Endpoints (Single & Bulk Delete)
 # -----------------------------------------------------------------------------
+@app.patch("/api/candidates/{candidate_id}/stage", tags=["Candidates"])
+def update_candidate_stage(
+    candidate_id: str,
+    payload: CandidateStageUpdateRequest,
+    _: str = Depends(verify_api_key)
+) -> Dict[str, Any]:
+    """
+    Update a candidate's pipeline stage directly.
+    Resets stage_entered_at to current UTC time (resetting idle days to 0.0),
+    resolves any open overdue alerts for the previous stage, and logs an immutable audit event.
+    """
+    conn = get_db_connection()
+    cand = conn.execute("SELECT * FROM candidates WHERE id = ?", (candidate_id,)).fetchone()
+    if not cand:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Candidate not found.")
+
+    old_stage = cand["stage"]
+    new_stage = payload.stage.strip()
+    if not new_stage:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Stage name cannot be empty.")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    # Update candidate's stage and reset stage_entered_at timer to NOW
+    conn.execute(
+        "UPDATE candidates SET stage = ?, stage_entered_at = ? WHERE id = ?",
+        (new_stage, now_iso, candidate_id)
+    )
+
+    # Resolve any existing open alerts for this candidate so they cleanly exit overdue state
+    conn.execute(
+        "UPDATE alerts SET status = 'resolved', resolved_at = ? WHERE candidate_id = ? AND status = 'open'",
+        (now_iso, candidate_id)
+    )
+
+    # Log immutable audit event
+    log_audit(
+        conn,
+        actor=payload.reviewer or "recruiter_lead",
+        action="STAGE_TRANSITION",
+        entity_type="candidate",
+        entity_id=candidate_id,
+        details=f"Moved candidate '{cand['name']}' from '{old_stage}' to '{new_stage}'. Idle timer reset to 0.0 days."
+    )
+    conn.commit()
+    conn.close()
+
+    return {
+        "candidate_id": candidate_id,
+        "name": cand["name"],
+        "previous_stage": old_stage,
+        "new_stage": new_stage,
+        "stage_entered_at": now_iso,
+        "message": f"Candidate successfully moved to '{new_stage}'. Idle timer reset to 0.0 days."
+    }
+
 @app.delete("/api/candidates/{candidate_id}", tags=["Candidates"])
 def delete_single_candidate(candidate_id: str, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """Delete a single candidate record and cascade-remove associated alerts and actions."""

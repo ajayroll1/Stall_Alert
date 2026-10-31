@@ -22,6 +22,7 @@ import {
   bulkDeleteAlerts,
   deleteRule,
   clearAuditLogs,
+  updateCandidateStage,
 } from "../../api";
 import { AlertItem, AuditRecord, Candidate, FollowupAction, MetricSummary, SLARule } from "../../types";
 
@@ -61,10 +62,16 @@ export default function DashboardPage() {
   const [newRuleDays, setNewRuleDays] = useState<number>(7);
   const [showAddRuleModal, setShowAddRuleModal] = useState<boolean>(false);
 
+  // Stage Change Modal State
+  const [stageChangeCandidate, setStageChangeCandidate] = useState<Candidate | null>(null);
+  const [selectedNewStage, setSelectedNewStage] = useState<string>("");
+  const [isUpdatingStage, setIsUpdatingStage] = useState<boolean>(false);
+
   // Drafts & Approval
   const [drafts, setDrafts] = useState<FollowupAction[]>([]);
   const [reviewModalAction, setReviewModalAction] = useState<FollowupAction | null>(null);
   const [editedDraftText, setEditedDraftText] = useState<string>("");
+  const [approveNextStage, setApproveNextStage] = useState<string>("");
 
   // Rules
   const [rules, setRules] = useState<SLARule[]>([]);
@@ -162,16 +169,41 @@ export default function DashboardPage() {
   const handleApproveReject = async (decision: "approved" | "rejected") => {
     if (!reviewModalAction) return;
     try {
-      await submitApprovalDecision(reviewModalAction.id, decision, "TalentLead", editedDraftText);
+      await submitApprovalDecision(
+        reviewModalAction.id,
+        decision,
+        "TalentLead",
+        editedDraftText,
+        approveNextStage || undefined
+      );
       showToast(
         decision === "approved"
-          ? "Draft approved & email successfully dispatched to candidate!"
+          ? (approveNextStage
+              ? `Draft approved, email sent & candidate advanced to '${approveNextStage}' (timer reset)!`
+              : "Draft approved & email successfully dispatched to candidate!")
           : "Candidate status updated to rejected & courtesy email dispatched."
       );
       setReviewModalAction(null);
+      setApproveNextStage("");
       await refreshAll();
     } catch (err: any) {
       showToast(`Action failed: ${err.message || "Unknown error"}`);
+    }
+  };
+
+  const handleUpdateCandidateStage = async () => {
+    if (!stageChangeCandidate || !selectedNewStage) return;
+    setIsUpdatingStage(true);
+    try {
+      const res = await updateCandidateStage(stageChangeCandidate.id, selectedNewStage, "TalentLead");
+      showToast(res.message);
+      setStageChangeCandidate(null);
+      setSelectedNewStage("");
+      await refreshAll();
+    } catch (err: any) {
+      showToast(err.message || "Failed to update stage");
+    } finally {
+      setIsUpdatingStage(false);
     }
   };
 
@@ -847,7 +879,30 @@ export default function DashboardPage() {
                           <td><strong>{c.name}</strong></td>
                           <td>{c.email}</td>
                           <td>{c.job_title}</td>
-                          <td><span className="badge badge-neutral">{c.stage}</span></td>
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                              <span className="badge badge-neutral">{c.stage}</span>
+                              <button
+                                className="btn btn-sm"
+                                style={{
+                                  padding: "0.15rem 0.45rem",
+                                  fontSize: "0.72rem",
+                                  background: "var(--bg-surface-elevated, #fff)",
+                                  border: "1px solid var(--border-subtle, #cbd5e1)",
+                                  borderRadius: "4px",
+                                  cursor: "pointer",
+                                  color: "var(--text-primary, #0f172a)"
+                                }}
+                                title="Move candidate to next interview stage & reset idle timer"
+                                onClick={() => {
+                                  setStageChangeCandidate(c);
+                                  setSelectedNewStage(c.stage);
+                                }}
+                              >
+                                Move ➔
+                              </button>
+                            </div>
+                          </td>
                           <td>{new Date(c.stage_entered_at).toLocaleDateString()}</td>
                           <td>{c.recruiter || "-"}</td>
                         </tr>
@@ -1343,13 +1398,92 @@ export default function DashboardPage() {
                 value={editedDraftText}
                 onChange={(e) => setEditedDraftText(e.target.value)}
               />
-              <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
+              <div style={{ marginTop: "1rem", padding: "0.75rem", background: "var(--bg-surface-subtle, #f8fafc)", borderRadius: "var(--radius-sm, 6px)", border: "1px solid var(--border-subtle, #e2e8f0)" }}>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: "0.3rem" }}>
+                  Advance Candidate Stage on Approval (Optional):
+                </label>
+                <select
+                  className="form-select"
+                  style={{ width: "100%", fontSize: "0.82rem" }}
+                  value={approveNextStage}
+                  onChange={(e) => setApproveNextStage(e.target.value)}
+                >
+                  <option value="">Keep current stage (Follow-up only)</option>
+                  {rules.map((r) => (
+                    <option key={r.stage} value={r.stage}>
+                      Advance to: {r.stage} (Resets Idle Timer to 0.0d)
+                    </option>
+                  ))}
+                  <option value="Offer Extended">Advance to: Offer Extended</option>
+                  <option value="Hired">Advance to: Hired</option>
+                </select>
+                <p style={{ fontSize: "0.74rem", color: "var(--text-muted)", marginTop: "0.3rem", marginBottom: 0 }}>
+                  Advancing stage resets candidate's dwell time to 0.0 days and begins the fresh SLA for that stage.
+                </p>
+              </div>
+
+              <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "0.75rem" }}>
                 Policy Notice: External delivery is gated by human approval. The server records your decision in the audit log.
               </p>
             </div>
             <div className="modal-footer">
               <button className="btn btn-danger" onClick={() => handleApproveReject("rejected")}>Reject Draft</button>
               <button className="btn btn-primary" onClick={() => handleApproveReject("approved")}>Approve Message</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Move / Update Stage Modal */}
+      {stageChangeCandidate && (
+        <div className="modal-backdrop">
+          <div className="modal-window">
+            <div className="modal-header">
+              <h2>Move Candidate to Next Stage</h2>
+              <button className="btn btn-secondary btn-sm" onClick={() => setStageChangeCandidate(null)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "1rem" }}>
+                Candidate: <strong>{stageChangeCandidate.name}</strong> ({stageChangeCandidate.job_title})
+                <br />
+                Current Stage: <span className="badge badge-neutral">{stageChangeCandidate.stage}</span>
+              </p>
+
+              <label style={{ fontSize: "0.82rem", fontWeight: 600, display: "block", marginBottom: "0.35rem" }}>
+                Select New Pipeline Stage:
+              </label>
+              <select
+                className="form-select"
+                style={{ width: "100%", marginBottom: "1rem" }}
+                value={selectedNewStage}
+                onChange={(e) => setSelectedNewStage(e.target.value)}
+              >
+                {rules.map((r) => (
+                  <option key={r.stage} value={r.stage}>
+                    {r.stage} (SLA: {r.max_days} days)
+                  </option>
+                ))}
+                {!rules.some(r => r.stage === "Offer Extended") && (
+                  <option value="Offer Extended">Offer Extended</option>
+                )}
+                {!rules.some(r => r.stage === "Hired") && (
+                  <option value="Hired">Hired</option>
+                )}
+              </select>
+
+              <div style={{ padding: "0.75rem", background: "var(--bg-surface-subtle, #f1f5f9)", borderRadius: "var(--radius-sm, 6px)", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                💡 <strong>SLA Reset Guarantee:</strong> Moving this candidate will automatically reset their idle duration to <strong>0.0 days</strong> starting from right now. Any active overdue alerts for the previous stage will be immediately resolved.
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setStageChangeCandidate(null)}>Cancel</button>
+              <button
+                className="btn btn-primary"
+                onClick={handleUpdateCandidateStage}
+                disabled={isUpdatingStage || selectedNewStage === stageChangeCandidate.stage}
+              >
+                {isUpdatingStage ? "Updating..." : "Confirm & Move Stage"}
+              </button>
             </div>
           </div>
         </div>
