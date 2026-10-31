@@ -222,6 +222,10 @@ class ActionOut(BaseModel):
 class ApprovalRequest(BaseModel):
     decision: str = Field(..., pattern="^(approved|rejected)$")
     reviewer: Optional[str] = "recruiter_lead"
+    edited_draft: Optional[str] = None
+
+class DeleteBulkRequest(BaseModel):
+    ids: List[str] = Field(..., min_length=1)
 
 class AuditLogEntry(BaseModel):
     id: str
@@ -644,7 +648,8 @@ def list_actions(status_filter: Optional[str] = None, _: str = Depends(verify_ap
 def approve_action(action_id: str, payload: ApprovalRequest, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Enforce human-in-the-loop governance: record approval or rejection of an outbound draft.
-    When approved, dispatches the email via SMTP if candidate email is valid.
+    - If approved: sends approved email to candidate, marks action 'approved', resolves overdue alert.
+    - If rejected: sends courteous rejection email to candidate, marks action 'rejected', resolves overdue alert.
     """
     conn = get_db_connection()
     action = conn.execute("SELECT * FROM actions WHERE id = ?", (action_id,)).fetchone()
@@ -656,34 +661,52 @@ def approve_action(action_id: str, payload: ApprovalRequest, _: str = Depends(ve
     now_iso = datetime.now(timezone.utc).isoformat()
     new_status = payload.decision
     dispatch_result = None
+    final_draft_text = payload.edited_draft if payload.edited_draft else action["draft"]
 
-    if new_status == "approved" and candidate and candidate["email"]:
-        from app.email_service import send_approved_candidate_email
-        subject = f"Update regarding your application for {candidate['job_title']}"
-        dispatch_result = send_approved_candidate_email(
-            candidate_email=candidate["email"],
-            candidate_name=candidate["name"],
-            subject=subject,
-            body_text=action["draft"],
-            reviewer_name=payload.reviewer or "Recruiting Operations"
-        )
+    if candidate and candidate["email"]:
+        from app.email_service import send_approved_candidate_email, send_rejected_candidate_email
+        if new_status == "approved":
+            subject = f"Update regarding your application for {candidate['job_title']}"
+            dispatch_result = send_approved_candidate_email(
+                candidate_email=candidate["email"],
+                candidate_name=candidate["name"],
+                subject=subject,
+                body_text=final_draft_text,
+                reviewer_name=payload.reviewer or "Recruiting Operations"
+            )
+        elif new_status == "rejected":
+            dispatch_result = send_rejected_candidate_email(
+                candidate_email=candidate["email"],
+                candidate_name=candidate["name"],
+                job_title=candidate["job_title"],
+                reviewer_name=payload.reviewer or "Recruiting Operations"
+            )
 
+    # Update action status and persist final text
     conn.execute(
-        "UPDATE actions SET status = ?, approved_at = ?, executed_at = ? WHERE id = ?",
+        "UPDATE actions SET status = ?, draft = ?, approved_at = ?, executed_at = ? WHERE id = ?",
         (
             new_status,
-            now_iso if new_status == "approved" else None,
+            final_draft_text,
+            now_iso,
             now_iso if (dispatch_result and dispatch_result.get("status") == "sent") else None,
             action_id
         ),
     )
+
+    # CRITICAL: Resolve the linked alert so the candidate leaves Overdue Alerts inbox!
+    if action["alert_id"]:
+        conn.execute("UPDATE alerts SET status = 'resolved', resolved_at = ? WHERE id = ?", (now_iso, action["alert_id"]))
+    else:
+        conn.execute("UPDATE alerts SET status = 'resolved', resolved_at = ? WHERE candidate_id = ? AND status = 'open'", (now_iso, action["candidate_id"]))
+
     log_audit(
         conn,
         actor=payload.reviewer or "reviewer",
         action=f"ACTION_{payload.decision.upper()}",
         entity_type="action",
         entity_id=action_id,
-        details=f"status set to {new_status}, email_dispatch={dispatch_result.get('status') if dispatch_result else 'none'}",
+        details=f"status={new_status}, resolved_alert=true, email_dispatch={dispatch_result.get('status') if dispatch_result else 'none'}",
     )
     conn.commit()
     conn.close()
@@ -694,6 +717,7 @@ def approve_action(action_id: str, payload: ApprovalRequest, _: str = Depends(ve
         "decision": payload.decision,
         "timestamp": now_iso,
         "email_delivery": dispatch_result,
+        "alert_resolved": True
     }
 
 @app.get("/api/audit-events", response_model=List[AuditLogEntry], tags=["Audit"])
@@ -838,3 +862,94 @@ def send_notification_digest(payload: NotificationTestPayload, _: str = Depends(
         },
         "message": f"Pipeline digest dispatched with {total_open} open alerts ({critical_alerts} Critical)."
     }
+
+# -----------------------------------------------------------------------------
+# Deletion & Pipeline Governance Endpoints (Single & Bulk Delete)
+# -----------------------------------------------------------------------------
+@app.delete("/api/candidates/{candidate_id}", tags=["Candidates"])
+def delete_single_candidate(candidate_id: str, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
+    """Delete a single candidate record and cascade-remove associated alerts and actions."""
+    conn = get_db_connection()
+    cand = conn.execute("SELECT id, name FROM candidates WHERE id = ?", (candidate_id,)).fetchone()
+    if not cand:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Candidate not found.")
+
+    conn.execute("DELETE FROM actions WHERE candidate_id = ?", (candidate_id,))
+    conn.execute("DELETE FROM alerts WHERE candidate_id = ?", (candidate_id,))
+    conn.execute("DELETE FROM candidates WHERE id = ?", (candidate_id,))
+    log_audit(conn, actor="operator", action="DELETE_CANDIDATE", entity_type="candidate", entity_id=candidate_id, details=f"deleted candidate {cand['name']}")
+    conn.commit()
+    conn.close()
+    return {"message": "Candidate and linked data deleted successfully", "deleted_id": candidate_id}
+
+@app.post("/api/candidates/bulk-delete", tags=["Candidates"])
+def delete_bulk_candidates(payload: DeleteBulkRequest, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
+    """Bulk delete candidate records by list of IDs."""
+    conn = get_db_connection()
+    deleted_count = 0
+    for cid in payload.ids:
+        conn.execute("DELETE FROM actions WHERE candidate_id = ?", (cid,))
+        conn.execute("DELETE FROM alerts WHERE candidate_id = ?", (cid,))
+        cur = conn.execute("DELETE FROM candidates WHERE id = ?", (cid,))
+        deleted_count += cur.rowcount
+
+    log_audit(conn, actor="operator", action="BULK_DELETE_CANDIDATES", entity_type="candidate", entity_id="batch", details=f"deleted {deleted_count} candidates")
+    conn.commit()
+    conn.close()
+    return {"message": f"Successfully deleted {deleted_count} candidate(s)", "deleted_count": deleted_count}
+
+@app.delete("/api/alerts/{alert_id}", tags=["Alerts"])
+def delete_single_alert(alert_id: str, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
+    """Delete or dismiss a specific overdue alert."""
+    conn = get_db_connection()
+    alert = conn.execute("SELECT id FROM alerts WHERE id = ?", (alert_id,)).fetchone()
+    if not alert:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Alert not found.")
+
+    conn.execute("DELETE FROM actions WHERE alert_id = ?", (alert_id,))
+    conn.execute("DELETE FROM alerts WHERE id = ?", (alert_id,))
+    log_audit(conn, actor="recruiter", action="DELETE_ALERT", entity_type="alert", entity_id=alert_id, details="alert dismissed/deleted")
+    conn.commit()
+    conn.close()
+    return {"message": "Alert deleted successfully", "deleted_id": alert_id}
+
+@app.post("/api/alerts/bulk-delete", tags=["Alerts"])
+def delete_bulk_alerts(payload: DeleteBulkRequest, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
+    """Bulk delete/dismiss overdue alerts."""
+    conn = get_db_connection()
+    deleted_count = 0
+    for aid in payload.ids:
+        conn.execute("DELETE FROM actions WHERE alert_id = ?", (aid,))
+        cur = conn.execute("DELETE FROM alerts WHERE id = ?", (aid,))
+        deleted_count += cur.rowcount
+
+    log_audit(conn, actor="recruiter", action="BULK_DELETE_ALERTS", entity_type="alert", entity_id="batch", details=f"deleted {deleted_count} alerts")
+    conn.commit()
+    conn.close()
+    return {"message": f"Successfully deleted {deleted_count} alert(s)", "deleted_count": deleted_count}
+
+@app.delete("/api/rules/{stage}", tags=["Rules"])
+def delete_stage_rule(stage: str, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
+    """Delete a configured stage SLA threshold rule."""
+    conn = get_db_connection()
+    cur = conn.execute("DELETE FROM rules WHERE stage = ?", (stage,))
+    if cur.rowcount == 0:
+        conn.close()
+        raise HTTPException(status_code=404, detail=f"Rule for stage '{stage}' not found.")
+
+    log_audit(conn, actor="admin", action="DELETE_RULE", entity_type="rule", entity_id=stage, details="deleted SLA rule")
+    conn.commit()
+    conn.close()
+    return {"message": f"Rule for '{stage}' deleted successfully.", "stage": stage}
+
+@app.delete("/api/audit-events/clear", tags=["Audit"])
+def clear_audit_events(_: str = Depends(verify_api_key)) -> Dict[str, Any]:
+    """Clear audit logs for administrative data maintenance."""
+    conn = get_db_connection()
+    cur = conn.execute("DELETE FROM audit_events")
+    cleared_count = cur.rowcount
+    conn.commit()
+    conn.close()
+    return {"message": f"Audit log maintenance completed. {cleared_count} records cleared.", "cleared_count": cleared_count}

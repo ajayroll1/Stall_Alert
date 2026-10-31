@@ -16,6 +16,12 @@ import {
   updateRule,
   fetchAuditLogs,
   uploadCandidatesCsv,
+  deleteCandidate,
+  bulkDeleteCandidates,
+  deleteAlert,
+  bulkDeleteAlerts,
+  deleteRule,
+  clearAuditLogs,
 } from "../../api";
 import { AlertItem, AuditRecord, Candidate, FollowupAction, MetricSummary, SLARule } from "../../types";
 
@@ -43,6 +49,15 @@ export default function DashboardPage() {
   // Candidates
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Selection states for Bulk actions
+  const [selectedAlertIds, setSelectedAlertIds] = useState<Set<string>>(new Set());
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
+
+  // New Rule inputs
+  const [newRuleStage, setNewRuleStage] = useState<string>("");
+  const [newRuleDays, setNewRuleDays] = useState<number>(7);
+  const [showAddRuleModal, setShowAddRuleModal] = useState<boolean>(false);
 
   // Drafts & Approval
   const [drafts, setDrafts] = useState<FollowupAction[]>([]);
@@ -145,12 +160,118 @@ export default function DashboardPage() {
   const handleApproveReject = async (decision: "approved" | "rejected") => {
     if (!reviewModalAction) return;
     try {
-      await submitApprovalDecision(reviewModalAction.id, decision, "TalentLead");
-      showToast(`Outreach draft marked as ${decision}`);
+      await submitApprovalDecision(reviewModalAction.id, decision, "TalentLead", editedDraftText);
+      showToast(
+        decision === "approved"
+          ? "Draft approved & email successfully dispatched to candidate!"
+          : "Candidate status updated to rejected & courtesy email dispatched."
+      );
       setReviewModalAction(null);
       await refreshAll();
+    } catch (err: any) {
+      showToast(`Action failed: ${err.message || "Unknown error"}`);
+    }
+  };
+
+  // --- Deletion & SLA Handlers ---
+  const handleDeleteAlert = async (alertId: string) => {
+    if (!window.confirm("Are you sure you want to dismiss/delete this overdue alert?")) return;
+    try {
+      await deleteAlert(alertId);
+      setSelectedAlertIds((prev) => {
+        const next = new Set(prev);
+        next.delete(alertId);
+        return next;
+      });
+      showToast("Alert deleted successfully");
+      await refreshAll();
     } catch {
-      showToast("Failed to submit approval decision");
+      showToast("Failed to delete alert");
+    }
+  };
+
+  const handleBulkDeleteAlerts = async () => {
+    if (selectedAlertIds.size === 0) return;
+    if (!window.confirm(`Delete ${selectedAlertIds.size} selected alert(s)?`)) return;
+    try {
+      await bulkDeleteAlerts(Array.from(selectedAlertIds));
+      setSelectedAlertIds(new Set());
+      showToast("Selected alerts deleted successfully");
+      await refreshAll();
+    } catch {
+      showToast("Failed to delete selected alerts");
+    }
+  };
+
+  const handleDeleteCandidate = async (candidateId: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete candidate '${name}' and all associated alerts/records?`)) return;
+    try {
+      await deleteCandidate(candidateId);
+      setSelectedCandidateIds((prev) => {
+        const next = new Set(prev);
+        next.delete(candidateId);
+        return next;
+      });
+      showToast(`Candidate '${name}' deleted successfully`);
+      await refreshAll();
+    } catch {
+      showToast("Failed to delete candidate");
+    }
+  };
+
+  const handleBulkDeleteCandidates = async () => {
+    if (selectedCandidateIds.size === 0) return;
+    if (!window.confirm(`Delete ${selectedCandidateIds.size} selected candidate(s) and their associated records?`)) return;
+    try {
+      await bulkDeleteCandidates(Array.from(selectedCandidateIds));
+      setSelectedCandidateIds(new Set());
+      showToast("Selected candidates deleted successfully");
+      await refreshAll();
+    } catch {
+      showToast("Failed to bulk delete candidates");
+    }
+  };
+
+  const handleDeleteRule = async (stage: string) => {
+    if (!window.confirm(`Delete SLA rule for stage '${stage}'?`)) return;
+    try {
+      await deleteRule(stage);
+      showToast(`SLA rule for '${stage}' removed`);
+      await refreshAll();
+    } catch {
+      showToast("Failed to delete SLA rule");
+    }
+  };
+
+  const handleAddRule = async () => {
+    if (!newRuleStage.trim()) {
+      showToast("Please enter a stage name");
+      return;
+    }
+    if (newRuleDays < 1) {
+      showToast("Please enter a positive SLA threshold");
+      return;
+    }
+    try {
+      await updateRule(newRuleStage.trim(), newRuleDays);
+      showToast(`Added SLA rule for '${newRuleStage.trim()}' (${newRuleDays} days)`);
+      setNewRuleStage("");
+      setNewRuleDays(7);
+      setShowAddRuleModal(false);
+      await refreshAll();
+    } catch {
+      showToast("Failed to add SLA rule");
+    }
+  };
+
+  const handleClearAuditLogs = async () => {
+    if (!window.confirm("Are you sure you want to clear all audit events? This cannot be undone.")) return;
+    try {
+      await clearAuditLogs();
+      showToast("Audit logs cleared successfully");
+      await refreshAll();
+    } catch {
+      showToast("Failed to clear audit logs");
     }
   };
 
@@ -380,7 +501,15 @@ export default function DashboardPage() {
                   ))}
                 </select>
               </div>
-              <div className="toolbar-right">
+              <div className="toolbar-right" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                {selectedAlertIds.size > 0 && (
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={handleBulkDeleteAlerts}
+                  >
+                    Delete Selected ({selectedAlertIds.size})
+                  </button>
+                )}
                 <span id="tour-alerts-counter" className="stat-label" style={{ margin: 0 }}>
                   {alerts.filter(a => !stageFilter || a.stage === stageFilter).length} alerts found
                 </span>
@@ -392,6 +521,26 @@ export default function DashboardPage() {
                 <table className="ops-table">
                   <thead>
                     <tr>
+                      <th style={{ width: 40, textAlign: "center" }}>
+                        <input
+                          type="checkbox"
+                          checked={
+                            (() => {
+                              const filtered = alerts.filter(a => !stageFilter || a.stage === stageFilter);
+                              return filtered.length > 0 && filtered.every(a => selectedAlertIds.has(a.id));
+                            })()
+                          }
+                          onChange={(e) => {
+                            const filtered = alerts.filter(a => !stageFilter || a.stage === stageFilter);
+                            if (e.target.checked) {
+                              setSelectedAlertIds(new Set(filtered.map(a => a.id)));
+                            } else {
+                              setSelectedAlertIds(new Set());
+                            }
+                          }}
+                          aria-label="Select all alerts"
+                        />
+                      </th>
                       <th>Urgency</th>
                       <th>Candidate Name</th>
                       <th>Target Role</th>
@@ -410,7 +559,7 @@ export default function DashboardPage() {
                       if (filtered.length === 0) {
                         return (
                           <tr>
-                            <td colSpan={7} style={{ padding: 0 }}>
+                            <td colSpan={8} style={{ padding: 0 }}>
                               <div className="empty-state-box">
                                 <div className="empty-state-icon">
                                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -429,6 +578,21 @@ export default function DashboardPage() {
 
                       return paginated.map((a, index) => (
                         <tr key={a.id} id={index === 0 ? "tour-alerts-first-row" : undefined}>
+                          <td style={{ textAlign: "center" }}>
+                            <input
+                              type="checkbox"
+                              checked={selectedAlertIds.has(a.id)}
+                              onChange={(e) => {
+                                setSelectedAlertIds(prev => {
+                                  const next = new Set(prev);
+                                  if (e.target.checked) next.add(a.id);
+                                  else next.delete(a.id);
+                                  return next;
+                                });
+                              }}
+                              aria-label={`Select alert ${a.id}`}
+                            />
+                          </td>
                           <td>
                             <span className={`badge badge-${a.severity}`}>{a.severity}</span>
                           </td>
@@ -442,13 +606,30 @@ export default function DashboardPage() {
                           <td><strong>{a.days_in_stage.toFixed(1)}</strong> days</td>
                           <td>{a.recruiter || "Unassigned"}</td>
                           <td>
-                            <button
-                              id={index === 0 ? "tour-alerts-draft-btn" : undefined}
-                              className="btn btn-secondary btn-sm"
-                              onClick={() => handleCreateDraft(a.id)}
-                            >
-                              Draft Follow-up
-                            </button>
+                            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                              <button
+                                id={index === 0 ? "tour-alerts-draft-btn" : undefined}
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => handleCreateDraft(a.id)}
+                              >
+                                Draft Follow-up
+                              </button>
+                              <button
+                                className="btn btn-sm"
+                                style={{
+                                  background: "transparent",
+                                  border: "1px solid var(--border-subtle, #e2e8f0)",
+                                  color: "var(--text-muted, #94a3b8)",
+                                  padding: "0.25rem 0.5rem",
+                                  cursor: "pointer",
+                                  borderRadius: "4px"
+                                }}
+                                title="Dismiss/Delete Alert"
+                                onClick={() => handleDeleteAlert(a.id)}
+                              >
+                                ✕
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ));
@@ -541,7 +722,15 @@ export default function DashboardPage() {
                   ))}
                 </select>
               </div>
-              <div className="toolbar-right">
+              <div className="toolbar-right" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                {selectedCandidateIds.size > 0 && (
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={handleBulkDeleteCandidates}
+                  >
+                    Delete Selected ({selectedCandidateIds.size})
+                  </button>
+                )}
                 <span id="tour-candidates-counter" className="stat-label" style={{ margin: 0 }}>
                   {candidates.filter(c => !candidateStageFilter || c.stage === candidateStageFilter).length} candidates found
                 </span>
@@ -553,6 +742,26 @@ export default function DashboardPage() {
                 <table className="ops-table">
                   <thead>
                     <tr>
+                      <th style={{ width: 40, textAlign: "center" }}>
+                        <input
+                          type="checkbox"
+                          checked={
+                            (() => {
+                              const filteredCandidates = candidates.filter(c => !candidateStageFilter || c.stage === candidateStageFilter);
+                              return filteredCandidates.length > 0 && filteredCandidates.every(c => selectedCandidateIds.has(c.id));
+                            })()
+                          }
+                          onChange={(e) => {
+                            const filteredCandidates = candidates.filter(c => !candidateStageFilter || c.stage === candidateStageFilter);
+                            if (e.target.checked) {
+                              setSelectedCandidateIds(new Set(filteredCandidates.map(c => c.id)));
+                            } else {
+                              setSelectedCandidateIds(new Set());
+                            }
+                          }}
+                          aria-label="Select all candidates"
+                        />
+                      </th>
                       <th>ID</th>
                       <th>Name</th>
                       <th>Email</th>
@@ -560,6 +769,7 @@ export default function DashboardPage() {
                       <th>Stage</th>
                       <th>Stage Entered</th>
                       <th>Recruiter</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -575,7 +785,7 @@ export default function DashboardPage() {
                       if (filteredCandidates.length === 0) {
                         return (
                           <tr>
-                            <td colSpan={7} style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
+                            <td colSpan={9} style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
                               No candidates found matching criteria.
                             </td>
                           </tr>
@@ -584,13 +794,38 @@ export default function DashboardPage() {
 
                       return paginatedCandidates.map((c, index) => (
                         <tr key={c.id} id={index === 0 ? "tour-candidates-first-row" : undefined}>
-                          <td><code>{c.external_id}</code></td>
+                          <td style={{ textAlign: "center" }}>
+                            <input
+                              type="checkbox"
+                              checked={selectedCandidateIds.has(c.id)}
+                              onChange={(e) => {
+                                setSelectedCandidateIds(prev => {
+                                  const next = new Set(prev);
+                                  if (e.target.checked) next.add(c.id);
+                                  else next.delete(c.id);
+                                  return next;
+                                });
+                              }}
+                              aria-label={`Select candidate ${c.name}`}
+                            />
+                          </td>
+                          <td><code>{c.external_id || c.id.slice(0, 8)}</code></td>
                           <td><strong>{c.name}</strong></td>
                           <td>{c.email}</td>
                           <td>{c.job_title}</td>
                           <td><span className="badge badge-neutral">{c.stage}</span></td>
                           <td>{new Date(c.stage_entered_at).toLocaleDateString()}</td>
                           <td>{c.recruiter || "-"}</td>
+                          <td>
+                            <button
+                              className="btn btn-sm btn-danger"
+                              style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
+                              onClick={() => handleDeleteCandidate(c.id, c.name)}
+                              title="Delete candidate"
+                            >
+                              Delete
+                            </button>
+                          </td>
                         </tr>
                       ));
                     })()}
@@ -792,6 +1027,12 @@ export default function DashboardPage() {
           <section id="tour-target-rules-section" className="tab-pane-content">
             <div id="tour-target-rules-toolbar" className="action-toolbar">
               <span className="stat-label">Configurable Service Level Agreements (SLA Thresholds in Days)</span>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => setShowAddRuleModal(true)}
+              >
+                + Add Stage SLA Rule
+              </button>
             </div>
 
             <div id="tour-rules-table-card" className="table-card">
@@ -801,7 +1042,7 @@ export default function DashboardPage() {
                     <tr>
                       <th>Hiring Pipeline Stage</th>
                       <th>Max Allowable Days (SLA)</th>
-                      <th>Action</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -827,13 +1068,22 @@ export default function DashboardPage() {
                           days
                         </td>
                         <td>
-                          <button
-                            id={index === 0 ? "tour-rules-update-btn" : undefined}
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => handleUpdateRule(r.stage)}
-                          >
-                            Update SLA
-                          </button>
+                          <div style={{ display: "flex", gap: "0.5rem" }}>
+                            <button
+                              id={index === 0 ? "tour-rules-update-btn" : undefined}
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => handleUpdateRule(r.stage)}
+                            >
+                              Update SLA
+                            </button>
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleDeleteRule(r.stage)}
+                              title="Delete SLA Rule"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -865,7 +1115,14 @@ export default function DashboardPage() {
                   ))}
                 </select>
               </div>
-              <div className="toolbar-right">
+              <div className="toolbar-right" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={handleClearAuditLogs}
+                  title="Clear all audit log entries"
+                >
+                  Clear Audit Logs
+                </button>
                 <span id="tour-audit-counter" className="stat-label" style={{ margin: 0 }}>
                   {auditLogs.filter((l) => !auditActionFilter || l.action === auditActionFilter).length} events recorded
                 </span>
@@ -994,6 +1251,51 @@ export default function DashboardPage() {
               <button className="btn btn-primary" onClick={handleFileUpload} disabled={isImporting}>
                 {isImporting ? "Uploading..." : "Upload & Process"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Stage SLA Rule Modal */}
+      {showAddRuleModal && (
+        <div className="modal-backdrop">
+          <div className="modal-window">
+            <div className="modal-header">
+              <h2>Add New Stage SLA Rule</h2>
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowAddRuleModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div style={{ marginBottom: "1rem" }}>
+                <label style={{ fontSize: "0.85rem", fontWeight: 600, display: "block", marginBottom: "0.3rem" }}>
+                  Pipeline Stage Name
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ width: "100%" }}
+                  placeholder="e.g. Leadership Interview, Reference Check"
+                  value={newRuleStage}
+                  onChange={(e) => setNewRuleStage(e.target.value)}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: "0.85rem", fontWeight: 600, display: "block", marginBottom: "0.3rem" }}>
+                  Max Allowable Days (SLA Threshold)
+                </label>
+                <input
+                  type="number"
+                  className="form-input"
+                  style={{ width: "100%" }}
+                  min={1}
+                  max={90}
+                  value={newRuleDays}
+                  onChange={(e) => setNewRuleDays(parseInt(e.target.value, 10) || 1)}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowAddRuleModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleAddRule}>Save Rule</button>
             </div>
           </div>
         </div>

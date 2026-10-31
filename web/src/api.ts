@@ -53,13 +53,68 @@ export async function fetchActions(): Promise<FollowupAction[]> {
   return res.json();
 }
 
-export async function submitApprovalDecision(actionId: string, decision: "approved" | "rejected", reviewer = "talent_lead"): Promise<void> {
+export async function submitApprovalDecision(
+  actionId: string,
+  decision: "approved" | "rejected",
+  reviewer = "talent_lead",
+  editedDraft?: string
+): Promise<void> {
   const res = await fetch(`${API_BASE}/api/actions/${actionId}/approval`, {
     method: "POST",
     headers: { ...defaultHeaders, "Content-Type": "application/json" },
-    body: JSON.stringify({ decision, reviewer }),
+    body: JSON.stringify({ decision, reviewer, edited_draft: editedDraft }),
   });
   if (!res.ok) throw new Error("Failed to submit approval decision");
+}
+
+export async function deleteCandidate(candidateId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/candidates/${candidateId}`, {
+    method: "DELETE",
+    headers: defaultHeaders,
+  });
+  if (!res.ok) throw new Error("Failed to delete candidate");
+}
+
+export async function bulkDeleteCandidates(ids: string[]): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/candidates/bulk-delete`, {
+    method: "POST",
+    headers: { ...defaultHeaders, "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+  if (!res.ok) throw new Error("Failed to bulk delete candidates");
+}
+
+export async function deleteAlert(alertId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/alerts/${alertId}`, {
+    method: "DELETE",
+    headers: defaultHeaders,
+  });
+  if (!res.ok) throw new Error("Failed to delete alert");
+}
+
+export async function bulkDeleteAlerts(ids: string[]): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/alerts/bulk-delete`, {
+    method: "POST",
+    headers: { ...defaultHeaders, "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+  if (!res.ok) throw new Error("Failed to bulk delete alerts");
+}
+
+export async function deleteRule(stage: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/rules/${encodeURIComponent(stage)}`, {
+    method: "DELETE",
+    headers: defaultHeaders,
+  });
+  if (!res.ok) throw new Error("Failed to delete stage SLA rule");
+}
+
+export async function clearAuditLogs(): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/audit-events/clear`, {
+    method: "DELETE",
+    headers: defaultHeaders,
+  });
+  if (!res.ok) throw new Error("Failed to clear audit logs");
 }
 
 export async function fetchRules(): Promise<SLARule[]> {
