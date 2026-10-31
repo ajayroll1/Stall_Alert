@@ -53,6 +53,8 @@ export default function DashboardPage() {
   // Selection states for Bulk actions
   const [selectedAlertIds, setSelectedAlertIds] = useState<Set<string>>(new Set());
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
+  const [isAlertDeleteMode, setIsAlertDeleteMode] = useState<boolean>(false);
+  const [isCandidateDeleteMode, setIsCandidateDeleteMode] = useState<boolean>(false);
 
   // New Rule inputs
   const [newRuleStage, setNewRuleStage] = useState<string>("");
@@ -196,6 +198,7 @@ export default function DashboardPage() {
     try {
       await bulkDeleteAlerts(Array.from(selectedAlertIds));
       setSelectedAlertIds(new Set());
+      setIsAlertDeleteMode(false);
       showToast("Selected alerts deleted successfully");
       await refreshAll();
     } catch {
@@ -225,6 +228,7 @@ export default function DashboardPage() {
     try {
       await bulkDeleteCandidates(Array.from(selectedCandidateIds));
       setSelectedCandidateIds(new Set());
+      setIsCandidateDeleteMode(false);
       showToast("Selected candidates deleted successfully");
       await refreshAll();
     } catch {
@@ -502,13 +506,33 @@ export default function DashboardPage() {
                 </select>
               </div>
               <div className="toolbar-right" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                {selectedAlertIds.size > 0 && (
+                {!isAlertDeleteMode ? (
                   <button
                     className="btn btn-danger btn-sm"
-                    onClick={handleBulkDeleteAlerts}
+                    onClick={() => setIsAlertDeleteMode(true)}
+                    title="Activate Delete Mode to select and delete alerts"
                   >
-                    Delete Selected ({selectedAlertIds.size})
+                    Delete
                   </button>
+                ) : (
+                  <>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={handleBulkDeleteAlerts}
+                      disabled={selectedAlertIds.size === 0}
+                    >
+                      Delete Selected ({selectedAlertIds.size})
+                    </button>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => {
+                        setIsAlertDeleteMode(false);
+                        setSelectedAlertIds(new Set());
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </>
                 )}
                 <span id="tour-alerts-counter" className="stat-label" style={{ margin: 0 }}>
                   {alerts.filter(a => !stageFilter || a.stage === stageFilter).length} alerts found
@@ -521,26 +545,28 @@ export default function DashboardPage() {
                 <table className="ops-table">
                   <thead>
                     <tr>
-                      <th style={{ width: 40, textAlign: "center" }}>
-                        <input
-                          type="checkbox"
-                          checked={
-                            (() => {
-                              const filtered = alerts.filter(a => !stageFilter || a.stage === stageFilter);
-                              return filtered.length > 0 && filtered.every(a => selectedAlertIds.has(a.id));
-                            })()
-                          }
-                          onChange={(e) => {
-                            const filtered = alerts.filter(a => !stageFilter || a.stage === stageFilter);
-                            if (e.target.checked) {
-                              setSelectedAlertIds(new Set(filtered.map(a => a.id)));
-                            } else {
-                              setSelectedAlertIds(new Set());
+                      {isAlertDeleteMode && (
+                        <th style={{ width: 40, textAlign: "center" }}>
+                          <input
+                            type="checkbox"
+                            checked={
+                              (() => {
+                                const filtered = alerts.filter(a => !stageFilter || a.stage === stageFilter);
+                                return filtered.length > 0 && filtered.every(a => selectedAlertIds.has(a.id));
+                              })()
                             }
-                          }}
-                          aria-label="Select all alerts"
-                        />
-                      </th>
+                            onChange={(e) => {
+                              const filtered = alerts.filter(a => !stageFilter || a.stage === stageFilter);
+                              if (e.target.checked) {
+                                setSelectedAlertIds(new Set(filtered.map(a => a.id)));
+                              } else {
+                                setSelectedAlertIds(new Set());
+                              }
+                            }}
+                            aria-label="Select all alerts"
+                          />
+                        </th>
+                      )}
                       <th>Urgency</th>
                       <th>Candidate Name</th>
                       <th>Target Role</th>
@@ -559,7 +585,7 @@ export default function DashboardPage() {
                       if (filtered.length === 0) {
                         return (
                           <tr>
-                            <td colSpan={8} style={{ padding: 0 }}>
+                            <td colSpan={isAlertDeleteMode ? 8 : 7} style={{ padding: 0 }}>
                               <div className="empty-state-box">
                                 <div className="empty-state-icon">
                                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -578,21 +604,23 @@ export default function DashboardPage() {
 
                       return paginated.map((a, index) => (
                         <tr key={a.id} id={index === 0 ? "tour-alerts-first-row" : undefined}>
-                          <td style={{ textAlign: "center" }}>
-                            <input
-                              type="checkbox"
-                              checked={selectedAlertIds.has(a.id)}
-                              onChange={(e) => {
-                                setSelectedAlertIds(prev => {
-                                  const next = new Set(prev);
-                                  if (e.target.checked) next.add(a.id);
-                                  else next.delete(a.id);
-                                  return next;
-                                });
-                              }}
-                              aria-label={`Select alert ${a.id}`}
-                            />
-                          </td>
+                          {isAlertDeleteMode && (
+                            <td style={{ textAlign: "center" }}>
+                              <input
+                                type="checkbox"
+                                checked={selectedAlertIds.has(a.id)}
+                                onChange={(e) => {
+                                  setSelectedAlertIds(prev => {
+                                    const next = new Set(prev);
+                                    if (e.target.checked) next.add(a.id);
+                                    else next.delete(a.id);
+                                    return next;
+                                  });
+                                }}
+                                aria-label={`Select alert ${a.id}`}
+                              />
+                            </td>
+                          )}
                           <td>
                             <span className={`badge badge-${a.severity}`}>{a.severity}</span>
                           </td>
@@ -723,13 +751,33 @@ export default function DashboardPage() {
                 </select>
               </div>
               <div className="toolbar-right" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                {selectedCandidateIds.size > 0 && (
+                {!isCandidateDeleteMode ? (
                   <button
                     className="btn btn-danger btn-sm"
-                    onClick={handleBulkDeleteCandidates}
+                    onClick={() => setIsCandidateDeleteMode(true)}
+                    title="Activate Delete Mode to select and delete candidates"
                   >
-                    Delete Selected ({selectedCandidateIds.size})
+                    Delete
                   </button>
+                ) : (
+                  <>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={handleBulkDeleteCandidates}
+                      disabled={selectedCandidateIds.size === 0}
+                    >
+                      Delete Selected ({selectedCandidateIds.size})
+                    </button>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => {
+                        setIsCandidateDeleteMode(false);
+                        setSelectedCandidateIds(new Set());
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </>
                 )}
                 <span id="tour-candidates-counter" className="stat-label" style={{ margin: 0 }}>
                   {candidates.filter(c => !candidateStageFilter || c.stage === candidateStageFilter).length} candidates found
@@ -742,26 +790,28 @@ export default function DashboardPage() {
                 <table className="ops-table">
                   <thead>
                     <tr>
-                      <th style={{ width: 40, textAlign: "center" }}>
-                        <input
-                          type="checkbox"
-                          checked={
-                            (() => {
-                              const filteredCandidates = candidates.filter(c => !candidateStageFilter || c.stage === candidateStageFilter);
-                              return filteredCandidates.length > 0 && filteredCandidates.every(c => selectedCandidateIds.has(c.id));
-                            })()
-                          }
-                          onChange={(e) => {
-                            const filteredCandidates = candidates.filter(c => !candidateStageFilter || c.stage === candidateStageFilter);
-                            if (e.target.checked) {
-                              setSelectedCandidateIds(new Set(filteredCandidates.map(c => c.id)));
-                            } else {
-                              setSelectedCandidateIds(new Set());
+                      {isCandidateDeleteMode && (
+                        <th style={{ width: 40, textAlign: "center" }}>
+                          <input
+                            type="checkbox"
+                            checked={
+                              (() => {
+                                const filteredCandidates = candidates.filter(c => !candidateStageFilter || c.stage === candidateStageFilter);
+                                return filteredCandidates.length > 0 && filteredCandidates.every(c => selectedCandidateIds.has(c.id));
+                              })()
                             }
-                          }}
-                          aria-label="Select all candidates"
-                        />
-                      </th>
+                            onChange={(e) => {
+                              const filteredCandidates = candidates.filter(c => !candidateStageFilter || c.stage === candidateStageFilter);
+                              if (e.target.checked) {
+                                setSelectedCandidateIds(new Set(filteredCandidates.map(c => c.id)));
+                              } else {
+                                setSelectedCandidateIds(new Set());
+                              }
+                            }}
+                            aria-label="Select all candidates"
+                          />
+                        </th>
+                      )}
                       <th>ID</th>
                       <th>Name</th>
                       <th>Email</th>
@@ -785,7 +835,7 @@ export default function DashboardPage() {
                       if (filteredCandidates.length === 0) {
                         return (
                           <tr>
-                            <td colSpan={9} style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
+                            <td colSpan={isCandidateDeleteMode ? 9 : 8} style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
                               No candidates found matching criteria.
                             </td>
                           </tr>
@@ -794,21 +844,23 @@ export default function DashboardPage() {
 
                       return paginatedCandidates.map((c, index) => (
                         <tr key={c.id} id={index === 0 ? "tour-candidates-first-row" : undefined}>
-                          <td style={{ textAlign: "center" }}>
-                            <input
-                              type="checkbox"
-                              checked={selectedCandidateIds.has(c.id)}
-                              onChange={(e) => {
-                                setSelectedCandidateIds(prev => {
-                                  const next = new Set(prev);
-                                  if (e.target.checked) next.add(c.id);
-                                  else next.delete(c.id);
-                                  return next;
-                                });
-                              }}
-                              aria-label={`Select candidate ${c.name}`}
-                            />
-                          </td>
+                          {isCandidateDeleteMode && (
+                            <td style={{ textAlign: "center" }}>
+                              <input
+                                type="checkbox"
+                                checked={selectedCandidateIds.has(c.id)}
+                                onChange={(e) => {
+                                  setSelectedCandidateIds(prev => {
+                                    const next = new Set(prev);
+                                    if (e.target.checked) next.add(c.id);
+                                    else next.delete(c.id);
+                                    return next;
+                                  });
+                                }}
+                                aria-label={`Select candidate ${c.name}`}
+                              />
+                            </td>
+                          )}
                           <td><code>{c.external_id || c.id.slice(0, 8)}</code></td>
                           <td><strong>{c.name}</strong></td>
                           <td>{c.email}</td>
