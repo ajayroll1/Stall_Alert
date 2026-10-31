@@ -202,3 +202,56 @@ def send_approved_candidate_email(
         html_body=html_body,
         text_body=body_text
     )
+
+
+def send_rejected_candidate_email(
+    candidate_email: str,
+    candidate_name: str,
+    job_title: str,
+    reviewer_name: str
+) -> Dict[str, Any]:
+    """
+    Dispatches a respectful, professional status update/rejection email
+    when an outreach is rejected with final decision.
+    """
+    subject = f"Update regarding your application for {job_title}"
+    body_text = f"""Dear {candidate_name},
+
+Thank you very much for taking the time to speak with our team regarding the {job_title} role. 
+
+After careful consideration of our current team requirements and project timelines, our hiring committee has decided not to proceed with your application for this specific position at this time.
+
+We were genuinely impressed by your background and experience, and we would welcome the opportunity to consider your profile for future roles that align with your expertise.
+
+We sincerely appreciate your interest in joining our team and wish you the very best in your professional endeavors.
+
+Warm regards,
+{reviewer_name}
+Recruiting Operations Team"""
+
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #fcfbf9; margin: 0; padding: 25px 15px;">
+      <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e2db; border-radius: 10px; padding: 35px 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.04);">
+        <div style="border-bottom: 2px solid #535962; padding-bottom: 15px; margin-bottom: 25px;">
+          <h2 style="margin: 0; color: #1d2125; font-size: 18px; font-weight: 700;">Application Status Update</h2>
+        </div>
+        <div style="color: #1d2125; font-size: 15px; line-height: 1.7; white-space: pre-line;">
+          {body_text}
+        </div>
+        <div style="margin-top: 35px; border-top: 1px solid #e5e2db; padding-top: 18px; font-size: 12px; color: #7d8590;">
+          Sent by {reviewer_name} • Talent Acquisition Operations
+        </div>
+      </div>
+    </body>
+    </html>
+    """
+
+    return send_smtp_email(
+        to_email=candidate_email,
+        subject=subject,
+        html_body=html_body,
+        text_body=body_text
+    )
