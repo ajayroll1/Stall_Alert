@@ -30,12 +30,12 @@
 
 - [x] **FR-005: Follow-Up Outreach Drafts & 1-Click Message Regeneration**
   - **Status:** `[x] VERIFIED`
-  - **Details:** Automatically generates contextual follow-up drafts. Includes `🔄 Regenerate` button to request alternative phrasing variants on demand.
+  - **Details:** Automatically generates contextual follow-up drafts. Includes ` Regenerate` button to request alternative phrasing variants on demand.
   - **Evidence:** Endpoint `POST /api/actions/{id}/regenerate` validated and tested.
 
 - [x] **FR-006: Candidate Stage Transitions & Dwell Timer Auto-Reset**
   - **Status:** `[x] VERIFIED`
-  - **Details:** Recruiters can move candidates to new interview stages (`Move ➔` button in Candidates tab or dropdown during Follow-up Approval). Resets idle dwell time to `0.0 days` and auto-resolves open alerts.
+  - **Details:** Recruiters can move candidates to new interview stages (`Move ` button in Candidates tab or dropdown during Follow-up Approval). Resets idle dwell time to `0.0 days` and auto-resolves open alerts.
   - **Evidence:** Endpoint `PATCH /api/candidates/{id}/stage` verified.
 
 - [x] **FR-007: Real SMTP Candidate & Recruiter Delivery**

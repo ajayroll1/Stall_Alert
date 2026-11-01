@@ -1,10 +1,10 @@
-# 🚀 STALL ALERTER — FREE DEPLOYMENT GUIDE (Easiest Way)
+# STALL ALERTER — FREE DEPLOYMENT GUIDE (Easiest Way)
 
 Bhai, is guide mein sabse easiest aur 100% FREE tarike se Frontend aur Backend dono ko live internet par host karne ke step-by-step instructions hain.
 
 ---
 
-## 📌 Summary: Kahan Host Karenge?
+## Summary: Kahan Host Karenge?
 
 * **Backend (FastAPI + Python + SQLite):** **Render.com** (100% Free Web Service)
 * **Frontend (Next.js 16 + React + TypeScript):** **Vercel.com** (100% Free Hobby Tier)
@@ -13,7 +13,7 @@ Dono platforms best hain, zero credit card chahiye, aur GitHub se direct connect
 
 ---
 
-## 🟢 PART 1: Backend Host Karna (Render.com Par)
+## PART 1: Backend Host Karna (Render.com Par)
 
 Render par hum FastAPI backend host karenge.
 
@@ -55,12 +55,12 @@ Scroll down karke **"Environment Variables"** section mein jao aur yeh 7 keys ad
 * Niche **"Create Web Service"** button daba do.
 * 2-3 minute mein backend build hokar live ho jayega.
 * Render aapko ek live URL dega, jaise:
-  👉 `https://stall-alerter-api.onrender.com`
+   `https://stall-alerter-api.onrender.com`
 * Ise copy karke rakh lo!
 
 ---
 
-## 🔵 PART 2: Frontend Host Karna (Vercel.com Par)
+## PART 2: Frontend Host Karna (Vercel.com Par)
 
 Next.js frontend ke liye Vercel sabse fast aur best platform hai (kyunki Vercel ne hi Next.js banaya hai).
 
@@ -90,18 +90,18 @@ Next.js frontend ke liye Vercel sabse fast aur best platform hai (kyunki Vercel 
 * **"Deploy"** button par click kar do!
 * 1 minute ke andar apka frontend build ho jayega aur balloons udate hue **"Congratulations!"** screen aayegi.
 * Aapko ek live domain mil jayega, jaise:
-  👉 `https://stall-alerter.vercel.app`
+   `https://stall-alerter.vercel.app`
 
 ---
 
-## 🟡 PART 3: CORS Setting Check (Bonus Step)
+## PART 3: CORS Setting Check (Bonus Step)
 
 Jab Vercel ka frontend URL mil jaye (e.g. `https://stall-alerter.vercel.app`), toh FastAPI backend already safe wildcards handle karta hai. Lekin best practice ke liye Render ke Environment Variables mein `ALLOWED_ORIGINS` mein apna Vercel domain dal sakte ho.
 
 ---
 
-## ⚡ Quick Pro-Tips:
+## Quick Pro-Tips:
 1. **Render Free Tier Sleep:** Free tier Render web service agar 15 minute tak use na ho toh sleep mode mein chali jati hai. Jab pehli baar Vercel dashboard khologe, toh pehla API call hone mein 20-30 seconds lag sakte hain backend wake up hone ke liye. Uske baad full speed chalega.
 2. **Automatic CD (Continuous Deployment):** Jaise hi aap GitHub par koi bhi naya commit push karoge, Render aur Vercel dono automatically 1 minute mein naya version deploy kar denge!
 
-Bhai bas yehi simple steps follow karo, project internet par free mein live ho jayega! 🚀
+Bhai bas yehi simple steps follow karo, project internet par free mein live ho jayega! 

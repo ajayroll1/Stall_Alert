@@ -19,7 +19,7 @@ The current implementation of Stall Alerter is a solid, functional **modular mon
 
 ### Category A: Scalability & Concurrency Bottlenecks
 
-#### 🔴 Critical Finding A-1: Unbounded In-Memory Alert Scan (`O(N)` Full Table Iteration)
+#### Critical Finding A-1: Unbounded In-Memory Alert Scan (`O(N)` Full Table Iteration)
 - **Location:** [`app/main.py` lines 434–454](file:///c:/Users/LENOVO/Desktop/Stall_Alert/app/main.py#L434-L454) (`scan_alerts()`)
 - **Current Pattern:**
   ```python
@@ -38,7 +38,7 @@ The current implementation of Stall Alerter is a solid, functional **modular mon
 
 ---
 
-#### 🔴 Critical Finding A-2: SQLite Single-Writer Lock Contention
+#### Critical Finding A-2: SQLite Single-Writer Lock Contention
 - **Location:** [`app/main.py` lines 48–53](file:///c:/Users/LENOVO/Desktop/Stall_Alert/app/main.py#L48-L53) (`get_db_connection()`)
 - **Current Pattern:** `sqlite3.connect("stall_alerter.db")` without connection pooling or WAL mode explicitly set.
 - **Architectural Impact:** SQLite locks the entire database file during writes (`IMPORTS`, `UPDATES`, `APPROVALS`). Under concurrent web traffic or multi-threaded background workers, requests will fail with `sqlite3.OperationalError: database is locked`.
@@ -50,7 +50,7 @@ The current implementation of Stall Alerter is a solid, functional **modular mon
 
 ### Category B: Security & Authentication Vulnerabilities
 
-#### 🟡 Finding B-1: Permissive CORS Configuration (`allow_origins=["*"]`)
+#### Finding B-1: Permissive CORS Configuration (`allow_origins=["*"]`)
 - **Location:** [`app/main.py` lines 147–153](file:///c:/Users/LENOVO/Desktop/Stall_Alert/app/main.py#L147-L153)
 - **Current Code:**
   ```python
@@ -70,7 +70,7 @@ The current implementation of Stall Alerter is a solid, functional **modular mon
 
 ---
 
-#### 🟡 Finding B-2: Single Shared Static API Key vs. User-Level Identity
+#### Finding B-2: Single Shared Static API Key vs. User-Level Identity
 - **Location:** [`app/main.py` lines 39–46](file:///c:/Users/LENOVO/Desktop/Stall_Alert/app/main.py#L39-L46) (`verify_api_key`)
 - **Current Code:** Constant `X-API-Key` comparison against an environment variable.
 - **Security Impact:**
@@ -80,7 +80,7 @@ The current implementation of Stall Alerter is a solid, functional **modular mon
 
 ---
 
-#### 🟡 Finding B-3: Missing File Size & MIME-Type Guards on CSV Ingestion
+#### Finding B-3: Missing File Size & MIME-Type Guards on CSV Ingestion
 - **Location:** [`app/main.py` lines 340–355](file:///c:/Users/LENOVO/Desktop/Stall_Alert/app/main.py#L340-L355) (`import_candidates()`)
 - **Current Code:** Reads the complete file into memory: `content = await file.read()`.
 - **Security Impact:** A malicious user could upload a 500MB file or decompression bomb, exhausting server RAM.
@@ -90,7 +90,7 @@ The current implementation of Stall Alerter is a solid, functional **modular mon
 
 ### Category C: Domain Logic & Functional Edge Cases
 
-#### 🟠 Finding C-1: Calendar Ignorance (Weekends & Statutory Holidays)
+#### Finding C-1: Calendar Ignorance (Weekends & Statutory Holidays)
 - **Location:** [`app/main.py` lines 270–276](file:///c:/Users/LENOVO/Desktop/Stall_Alert/app/main.py#L270-L276) (`compute_elapsed_days()`)
 - **Current Code:** Raw wall-clock delta calculation:
   ```python
@@ -102,7 +102,7 @@ The current implementation of Stall Alerter is a solid, functional **modular mon
 
 ---
 
-#### 🟠 Finding C-2: Missing Database Indexing on Frequent Query Predicates
+#### Finding C-2: Missing Database Indexing on Frequent Query Predicates
 - **Location:** SQLite table definition in `app/main.py`.
 - **Current State:** No secondary indexes created on `candidates(stage)`, `candidates(stage_entered_at)`, or `alerts(status, severity)`.
 - **Performance Impact:** Causes full-table scans for `/api/alerts?status_filter=open` and `/api/candidates?stage=...`.

@@ -24,30 +24,30 @@ Recruiting teams at high-growth tech companies regularly lose premier talent bec
 
 ```mermaid
 flowchart TD
-    A["📂 1. Candidate Pipeline Source (ATS CSV)"] --> B["⚙️ 2. Validation & Sanitization Engine\n(Formula Injection Stripping & Header Validation)"]
-    B --> C[("💾 Candidate Store (Relational DB)")]
-    B --> FilesLog[("📑 Files & Batches History Table")]
+    A[" 1. Candidate Pipeline Source (ATS CSV)"] --> B[" 2. Validation & Sanitization Engine\n(Formula Injection Stripping & Header Validation)"]
+    B --> C[(" Candidate Store (Relational DB)")]
+    B --> FilesLog[(" Files & Batches History Table")]
     
-    D["⏱️ Configured Stage SLAs\n(e.g., Tech Interview = 5.0 Days)"] --> E["🔍 3. Deterministic Stall Scanner"]
+    D["⏱ Configured Stage SLAs\n(e.g., Tech Interview = 5.0 Days)"] --> E[" 3. Deterministic Stall Scanner"]
     C --> E
     
     E --> F{"Elapsed Dwell >= SLA Threshold?"}
-    F -- "No (On Track)" --> G["🟢 Healthy State (No Alert)"]
-    F -- "Yes (Overdue)" --> H["🚨 4. Priority Alert Engine"]
+    F -- "No (On Track)" --> G[" Healthy State (No Alert)"]
+    F -- "Yes (Overdue)" --> H[" 4. Priority Alert Engine"]
     
     H --> I["Urgency Classification:\n• Critical (>= 2.0x SLA)\n• High (>= 1.5x SLA)\n• Medium (>= 1.0x SLA)"]
-    I --> J["📋 5. Operations Console Inbox (/dashboard)"]
+    I --> J[" 5. Operations Console Inbox (/dashboard)"]
     
-    J --> K["✍️ 6. 1-Click Contextual Follow-up Draft Generator"]
-    K --> Regen["🔄 7. Alternative Tone Message Regeneration"]
-    Regen --> L{"👤 8. Human Recruiter Approval Gate"}
+    J --> K[" 6. 1-Click Contextual Follow-up Draft Generator"]
+    K --> Regen[" 7. Alternative Tone Message Regeneration"]
+    Regen --> L{" 8. Human Recruiter Approval Gate"}
     K --> L
     
-    L -- "Approve & Send" --> M["📧 9. Real SMTP Email Dispatch\n(Candidate receives update)"]
-    L -- "Reject Candidate" --> Rejection["✉️ 10. Courtesy Notice Dispatch\n(Respectful status update)"]
-    L -- "Advance Stage" --> Advance["🚀 11. Move Stage & Reset Timer\n(Dwell days resets to 0.0d)"]
+    L -- "Approve & Send" --> M[" 9. Real SMTP Email Dispatch\n(Candidate receives update)"]
+    L -- "Reject Candidate" --> Rejection[" 10. Courtesy Notice Dispatch\n(Respectful status update)"]
+    L -- "Advance Stage" --> Advance[" 11. Move Stage & Reset Timer\n(Dwell days resets to 0.0d)"]
     
-    M --> N[("📝 12. Immutable Audit Event Log")]
+    M --> N[(" 12. Immutable Audit Event Log")]
     Rejection --> N
     Advance --> N
 ```
@@ -74,7 +74,7 @@ stateDiagram-v2
     }
     
     AlertCreated --> DraftGenerated : Recruiter clicks 'Draft Follow-up'
-    DraftGenerated --> DraftRegenerated : Recruiter clicks '🔄 Regenerate'
+    DraftGenerated --> DraftRegenerated : Recruiter clicks ' Regenerate'
     DraftRegenerated --> DraftGenerated : New phrasing populated
     
     DraftGenerated --> DecisionGate : Recruiter reviews message

@@ -7,7 +7,7 @@
 
 ---
 
-## 🎯 1. The Core Problem Statement
+## 1. The Core Problem Statement
 
 In modern talent acquisition, organizations spend millions of dollars sourcing candidates, yet lose up to **35% of high-intent applicants** due to a single operational failure: **Pipeline Stagnation**.
 
@@ -22,13 +22,13 @@ Existing Applicant Tracking Systems (Greenhouse, Lever, Workday) are passive rec
 
 ---
 
-## 💡 2. The Architectural Philosophy (The "Stall Alerter" Way)
+## 2. The Architectural Philosophy (The "Stall Alerter" Way)
 
 Stall Alerter was engineered around four non-negotiable principles:
 
 ```mermaid
 graph TD
-    A["🛡️ Core Engineering Pillars"] --> B["1. Mathematical Determinism\n(Zero AI Hallucinations in SLA math)"]
+    A[" Core Engineering Pillars"] --> B["1. Mathematical Determinism\n(Zero AI Hallucinations in SLA math)"]
     A --> C["2. Human-in-the-Loop\n(Strict Recruiter Sign-Off Gate)"]
     A --> D["3. Complete Lifecycle CRM\n(Auto-Resetting Timers & Stage Moves)"]
     A --> E["4. Immutable Compliance\n(Tamper-Proof Audit Logging)"]
@@ -62,17 +62,17 @@ Stall Alerter strictly manages **recruiting operations velocity**. It:
 
 ---
 
-## 🔄 3. Complete End-to-End Operational Lifecycle
+## 3. Complete End-to-End Operational Lifecycle
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Recruiter as 👤 Talent Recruiter / Lead
-    participant Web as 🖥️ Web Console (/dashboard)
-    participant API as ⚡ FastAPI Backend
-    participant DB as 💾 Relational Database
-    participant SMTP as 📧 SMTP Email Relay
-    actor Candidate as 🧑 Candidate
+    actor Recruiter as  Talent Recruiter / Lead
+    participant Web as  Web Console (/dashboard)
+    participant API as  FastAPI Backend
+    participant DB as  Relational Database
+    participant SMTP as  SMTP Email Relay
+    actor Candidate as  Candidate
 
     Recruiter->>Web: Uploads ATS CSV Export
     Web->>API: POST /api/candidates/import (Sanitized)
@@ -90,7 +90,7 @@ sequenceDiagram
     API-->>Web: Returns Contextual Follow-up Draft
     
     opt Recruiter wants fresh phrasing
-        Recruiter->>Web: Clicks "🔄 Regenerate"
+        Recruiter->>Web: Clicks " Regenerate"
         Web->>API: POST /api/actions/{id}/regenerate
         API-->>Web: Returns freshly worded draft variant
     end
@@ -113,7 +113,7 @@ sequenceDiagram
 
 ---
 
-## 🏛️ 4. Data Entity Design & Relationships
+## 4. Data Entity Design & Relationships
 
 The relational architecture ensures referential integrity and audit compliance:
 
@@ -187,7 +187,7 @@ erDiagram
 
 ---
 
-## 🎓 5. Industry Best Practices & Engineering Standard
+## 5. Industry Best Practices & Engineering Standard
 
 Stall Alerter follows standards taught in top-tier software engineering and product management programs:
 1. **WCAG 2.2 AA Compliance:** High-contrast accessible color tokens, semantic HTML, and responsive mobile-first bottom sheets.

@@ -1,4 +1,4 @@
-# STALL ALERTER 🚀
+# STALL ALERTER
 ### Intelligent, Human-Governed Hiring Pipeline Monitoring & Candidate Care
 
 [![Live Production UI](https://img.shields.io/badge/Production%20UI-Vercel%20Live-black?style=flat&logo=vercel)](https://stall-alert.vercel.app)
@@ -9,7 +9,7 @@
 
 ---
 
-## 📌 What is Stall Alerter?
+## What is Stall Alerter?
 Stall Alerter is an operational console built for talent acquisition teams and recruiters. It stops candidates from falling through the cracks by actively monitoring how long each applicant has been waiting at their current interview stage.
 
 When a candidate exceeds the company's agreed-upon Service Level Agreement (SLA), Stall Alerter flags them with a clear priority alert, writes a personalized update email, and allows the recruiter to review, edit, advance their stage, and send the email with a single click.
@@ -26,7 +26,7 @@ flowchart LR
 
 ---
 
-## 🌐 Live Production URLs
+## Live Production URLs
 
 | Component | Platform | URL |
 |---|---|---|
@@ -38,7 +38,7 @@ flowchart LR
 
 ---
 
-## ✨ Key Features & Capabilities
+## Key Features & Capabilities
 
 - Deterministic SLA Breach Detection: Alert severity (*Medium*, *High*, *Critical*) is calculated using exact mathematical time elapsed ($T_{\text{current}} - T_{\text{entered}} > \text{SLA}$), not unpredictable AI guesses.
 - 1-Click Review & Approve: Clean outreach modal with instant optimistic dismissal. No lag, no double-clicking.
@@ -51,7 +51,7 @@ flowchart LR
 
 ---
 
-## 🛠️ Step-by-Step Local Setup & Run Guide
+## Step-by-Step Local Setup & Run Guide
 
 Running Stall Alerter on your local machine is straightforward. Follow these steps.
 
@@ -131,12 +131,12 @@ start_all.bat
 
 ---
 
-## 🧪 Testing the System (Step-by-Step Walkthrough)
+## Testing the System (Step-by-Step Walkthrough)
 
 1. Open your browser and go to `http://localhost:3000/dashboard`.
 2. Click + Upload New CSV or click the top-right import icon.
 3. Select the provided sample data file located at `examples/candidates.csv` (or any custom CSV export).
-4. Click Upload & Process. The system will show a green checkmark `✅ Success! Imported X rows` and auto-close smoothly.
+4. Click Upload & Process. The system will show a confirmation `Success! Imported X rows` and auto-close smoothly.
 5. In the Overdue Alerts tab, click Draft Follow-up for any candidate who exceeded SLA.
 6. In the modal:
    - Click Regenerate if you'd like an alternative draft.
@@ -145,7 +145,7 @@ start_all.bat
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Stall_Alert/
@@ -155,7 +155,7 @@ Stall_Alert/
 ├── docs/                 # Complete project documentation & reflections
 │   ├── DIRECTIVE.md      # Core architectural charter & non-negotiables
 │   ├── 5_DAY_LOGBOOK.md  # Detailed chronological 5-day engineering log
-│   ├── UNLEARNED.md      # A one-page reflection on what we unlearned
+│   ├── UNLEARNED.md      # A one-page reflection on what I unlearned
 │   ├── API.md            # Complete REST API reference & payload contracts
 │   ├── ARCHITECTURE.md   # System architecture diagrams & data model (ERD)
 │   ├── SECURITY.md       # STRIDE threat model & data defense policies
@@ -178,16 +178,16 @@ Stall_Alert/
 
 ---
 
-## 📄 Key Engineering Documentation Links
+## Key Engineering Documentation Links
 
-- 📋 [Final Directive (docs/DIRECTIVE.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/DIRECTIVE.md): System charter, core problem, and non-negotiables.
-- 📅 [5-Day Engineering Logbook (docs/5_DAY_LOGBOOK.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/5_DAY_LOGBOOK.md): Realistic, chronological daily log of how Stall Alerter was built.
-- 💡 [What We Unlearned (docs/UNLEARNED.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/UNLEARNED.md): Real-world reflections on simplicity, AI hype, and human governance.
-- 🔌 [REST API Documentation (docs/API.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/API.md): Request and response schemas for all endpoints.
-- 🏗️ [System Architecture (docs/ARCHITECTURE.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/ARCHITECTURE.md): Component diagrams, sequence flows, and database ERD.
-- 🛡️ [Security Specification (docs/SECURITY.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/SECURITY.md): Threat modeling, sanitization, and secrets management.
+- [Final Directive (docs/DIRECTIVE.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/DIRECTIVE.md): System charter, core problem, and non-negotiables.
+- [5-Day Engineering Logbook (docs/5_DAY_LOGBOOK.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/5_DAY_LOGBOOK.md): Realistic, chronological daily log of how I built Stall Alerter.
+- [What I Unlearned (docs/UNLEARNED.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/UNLEARNED.md): Real-world reflections on simplicity, AI hype, and human governance.
+- [REST API Documentation (docs/API.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/API.md): Request and response schemas for all endpoints.
+- [System Architecture (docs/ARCHITECTURE.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/ARCHITECTURE.md): Component diagrams, sequence flows, and database ERD.
+- [Security Specification (docs/SECURITY.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/SECURITY.md): Threat modeling, sanitization, and secrets management.
 
 ---
 
-## ⚖️ License
+## License
 Released under the MIT License. Built with care for engineering and talent teams worldwide.

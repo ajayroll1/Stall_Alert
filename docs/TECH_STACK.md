@@ -91,7 +91,7 @@ Stall Alerter is built as a high-performance **modular monolith** with clear bou
 |---|---|---|
 | **Authentication** | `X-API-Key` Request Header | Enforced on all operational endpoints (`/api/*`), rejecting unauthorized requests with HTTP 401. |
 | **Deterministic Rule Primacy** | Pure Python Domain Math | SLA calculations, idle days, and severity ranking are 100% deterministic, preventing LLM hallucination in calculations. |
-| **Human-in-the-Loop Governance** | Gated State Machine (`draft` ➔ `approved`/`rejected`) | No external candidate communications are dispatched autonomously. Explicit recruiter authorization is required. |
+| **Human-in-the-Loop Governance** | Gated State Machine (`draft`  `approved`/`rejected`) | No external candidate communications are dispatched autonomously. Explicit recruiter authorization is required. |
 | **Audit Trails** | Append-only `audit_events` | Immutable chronological event logging tracking actor, action, timestamp, and target entity for compliance. |
 | **Injection Defense** | Parameterized SQL & CSV sanitization | All database operations use parameter bindings (`?`); CSV cells are sanitized against formula injection (`=`, `@`, `+`, `-`). |
 
