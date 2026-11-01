@@ -25,6 +25,7 @@ import {
   updateCandidateStage,
   fetchUploadedFiles,
   deleteUploadedFile,
+  regenerateDraft,
 } from "../../api";
 import { AlertItem, AuditRecord, Candidate, FollowupAction, MetricSummary, SLARule, UploadedFileRecord } from "../../types";
 
@@ -79,6 +80,7 @@ export default function DashboardPage() {
   const [reviewModalAction, setReviewModalAction] = useState<FollowupAction | null>(null);
   const [editedDraftText, setEditedDraftText] = useState<string>("");
   const [approveNextStage, setApproveNextStage] = useState<string>("");
+  const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
 
   // Rules
   const [rules, setRules] = useState<SLARule[]>([]);
@@ -172,6 +174,22 @@ export default function DashboardPage() {
       setActiveTab("drafts");
     } catch {
       showToast("Error creating draft");
+    }
+  };
+
+  const handleRegenerateDraft = async () => {
+    if (!reviewModalAction) return;
+    setIsRegenerating(true);
+    try {
+      const updated = await regenerateDraft(reviewModalAction.id);
+      setEditedDraftText(updated.draft);
+      setReviewModalAction(updated);
+      showToast("✨ Fresh message variant regenerated successfully");
+      await refreshAll();
+    } catch {
+      showToast("Failed to regenerate message");
+    } finally {
+      setIsRegenerating(false);
     }
   };
 
@@ -1571,8 +1589,20 @@ export default function DashboardPage() {
         <div className="modal-backdrop">
           <div className="modal-window">
             <div className="modal-header">
-              <h2>Review & Approve Follow-up Outreach</h2>
-              <button className="btn btn-secondary btn-sm" onClick={() => setReviewModalAction(null)}>✕</button>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <h2 style={{ margin: 0 }}>Review & Approve Follow-up Outreach</h2>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleRegenerateDraft}
+                  disabled={isRegenerating}
+                  title="Generate a fresh phrasing variant for this follow-up email"
+                >
+                  {isRegenerating ? "Regenerating..." : "🔄 Regenerate"}
+                </button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setReviewModalAction(null)}>✕</button>
+              </div>
             </div>
             <div className="modal-body">
               <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: "0.4rem" }}>

@@ -53,6 +53,15 @@ export async function fetchActions(): Promise<FollowupAction[]> {
   return res.json();
 }
 
+export async function regenerateDraft(actionId: string): Promise<FollowupAction> {
+  const res = await fetch(`${API_BASE}/api/actions/${actionId}/regenerate`, {
+    method: "POST",
+    headers: defaultHeaders,
+  });
+  if (!res.ok) throw new Error("Failed to regenerate follow-up draft");
+  return res.json();
+}
+
 export async function submitApprovalDecision(
   actionId: string,
   decision: "approved" | "rejected",

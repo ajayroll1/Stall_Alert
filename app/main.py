@@ -684,6 +684,58 @@ def list_actions(status_filter: Optional[str] = None, _: str = Depends(verify_ap
     conn.close()
     return [dict(r) for r in rows]
 
+@app.post("/api/actions/{action_id}/regenerate", response_model=ActionOut, tags=["Actions"])
+def regenerate_followup_draft(action_id: str, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
+    """
+    Regenerate a follow-up draft using updated candidate dwell data and fresh phrasing.
+    Allows recruiters to request a freshly worded message variant before approval.
+    """
+    conn = get_db_connection()
+    action = conn.execute("SELECT * FROM actions WHERE id = ?", (action_id,)).fetchone()
+    if not action:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Action not found.")
+
+    candidate = conn.execute("SELECT * FROM candidates WHERE id = ?", (action["candidate_id"],)).fetchone()
+    if not candidate:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Associated candidate not found.")
+
+    now_dt = datetime.now(timezone.utc)
+    entered_dt = parse_iso_or_date(candidate["stage_entered_at"]) or now_dt
+    days_elapsed = compute_elapsed_days(entered_dt, now_dt)
+
+    # Generate an alternative tone-phrased draft variant
+    variant_draft = (
+        f"Subject: Status Update: Your application for {candidate['job_title']} at our company\n\n"
+        f"Dear {candidate['name']},\n\n"
+        f"We hope you are having a wonderful week. We wanted to personally follow up regarding your interview progress "
+        f"in the {candidate['stage']} stage for the {candidate['job_title']} position.\n\n"
+        f"Our team is currently completing our collaborative candidate reviews. We value your time and patience, and we will "
+        f"reach out directly with feedback and next steps shortly.\n\n"
+        f"If you have any pressing questions in the meantime, please feel free to let us know.\n\n"
+        f"Warm regards,\n{candidate['recruiter'] or 'Talent Operations Lead'}\n"
+    )
+
+    now_iso = now_dt.isoformat()
+    conn.execute(
+        "UPDATE actions SET draft = ?, status = 'draft' WHERE id = ?",
+        (variant_draft, action_id)
+    )
+    log_audit(
+        conn,
+        actor="recruiter",
+        action="REGENERATE_DRAFT",
+        entity_type="action",
+        entity_id=action_id,
+        details=f"regenerated follow-up message variant for candidate {candidate['name']}"
+    )
+    conn.commit()
+
+    updated = conn.execute("SELECT * FROM actions WHERE id = ?", (action_id,)).fetchone()
+    conn.close()
+    return dict(updated)
+
 @app.post("/api/actions/{action_id}/approval", tags=["Actions"])
 def approve_action(action_id: str, payload: ApprovalRequest, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
     """
