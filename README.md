@@ -1,144 +1,193 @@
-# STALL ALERTER
-> Production-Grade, Security-First, Operational Recruiting Copilot for Candidate Stall Detection, SLA Governance, and Automated Candidate Communication.
+# STALL ALERTER 🚀
+### Intelligent, Human-Governed Hiring Pipeline Monitoring & Candidate Care
 
-[![CI Pipeline](https://github.com/ajayroll1/Stall_Alert/actions/workflows/ci.yml/badge.svg)](https://github.com/ajayroll1/Stall_Alert/actions)
-[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2016%20(React%2019)-black?style=flat&logo=next.js)](https://nextjs.org)
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%200.115+-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
-[![Python](https://img.shields.io/badge/Python-3.11+-3776ab?style=flat&logo=python)](https://www.python.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178c6?style=flat&logo=typescript)](https://www.typescriptlang.org)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-
----
-
-## 📌 Executive Summary & Product Mission
-
-High-growth companies frequently lose top-tier talent not due to compensation or competition, but due to **unintentional pipeline stagnation**—candidates sitting unattended in an interview stage exceeding operational SLAs (Service Level Agreements) without proactive communication.
-
-**Stall Alerter** operates as a mission-critical operational co-pilot for talent acquisition leaders:
-1. **Detects Bottlenecks Deterministically:** Computes exact dwell days per candidate stage down to fractional decimals using UTC clock precision.
-2. **Prioritizes Urgency:** Automatically assigns severity tiers (*Medium $\ge 1\times$ SLA*, *High $\ge 1.5\times$ SLA*, *Critical $\ge 2.0\times$ SLA*).
-3. **Drafts Contextual Outreach & Message Regeneration:** Prepares personalized, respectful follow-up drafts with 1-click alternative tone regeneration.
-4. **Human-in-the-Loop Governance:** Enforces mandatory human approval before outbound email dispatch—zero autonomous AI actions leave without recruiter sign-off.
-5. **Real SMTP Email Dispatch:** Dispatches approved updates or polite rejection notices directly to candidates via secure SMTP (Gmail / Custom relay).
-6. **Complete Pipeline Lifecycle:** Moves candidates across interview stages directly from the UI, auto-resetting dwell timers to `0.0 days`.
-7. **Files & Batches Ingestion History:** Tracks every uploaded CSV with metadata, row counts, and 1-click re-download capability.
-8. **Immutable Compliance Audit Trail:** Records all operational decisions, deletions, and state transitions in an append-only audit event log.
+[![Live Production UI](https://img.shields.io/badge/Production%20UI-Vercel%20Live-black?style=flat&logo=vercel)](https://stall-alert.vercel.app)
+[![Live Backend API](https://img.shields.io/badge/Production%20API-Render%20Live-46E3B7?style=flat&logo=render)](https://stall-alert.onrender.com)
+[![Next.js 16](https://img.shields.io/badge/Frontend-Next.js%2016%20%7C%20React%2019-000000?style=flat&logo=next.js)](https://nextjs.org/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%200.115%20%7C%20Python%203.11+-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![SQLite](https://img.shields.io/badge/Storage-SQLite3%20%7C%20Postgres%20Ready-003B57?style=flat&logo=sqlite)](https://sqlite.org/)
 
 ---
 
-## 🏛️ System Architecture
+## 📌 What is Stall Alerter?
+**Stall Alerter** is an operational console built for talent acquisition teams and recruiters. It stops candidates from falling through the cracks by actively monitoring how long each applicant has been waiting at their current interview stage.
+
+When a candidate exceeds the company's agreed-upon Service Level Agreement (SLA), Stall Alerter flags them with a clear priority alert, writes a personalized update email, and allows the recruiter to review, edit, advance their stage, and send the email with **a single click**.
 
 ```mermaid
-flowchart TD
-    subgraph Data Layer ["Data & Ingestion Layer"]
-        CSV["📁 Universal ATS CSV Export"] --> IngestionEngine["⚙️ Streaming CSV Validator & Sanitizer"]
-        IngestionEngine --> DB[("💾 Relational Database\n(SQLite WAL / PostgreSQL)")]
-        IngestionEngine --> FilesTable[("📑 Ingested Files & Batches History")]
-    end
-
-    subgraph SLA Engine ["Deterministic SLA Engine"]
-        Rules["⏱️ Configurable Stage SLAs\n(Recruiter Screen, Tech Round, Offer)"] --> Scanner["🔍 Deterministic Stall Scanner"]
-        DB --> Scanner
-        Scanner --> UrgencyGate{"Elapsed >= SLA?"}
-        UrgencyGate -- Yes --> AlertsQueue["🚨 Priority Overdue Alerts Inbox\n(Medium / High / Critical)"]
-        UrgencyGate -- No --> HealthyState["🟢 Pipeline Operating Within SLA"]
-    end
-
-    subgraph Governance ["Human-in-the-Loop Governance"]
-        AlertsQueue --> DraftEngine["✍️ Contextual Draft Generator"]
-        DraftEngine --> RegenEngine["🔄 1-Click Message Regeneration"]
-        DraftEngine --> ReviewModal{"👤 Recruiter Approval Modal"}
-        ReviewModal -- "Approve" --> Dispatcher["📧 Real SMTP Dispatcher\n(Follow-up Email to Candidate)"]
-        ReviewModal -- "Reject" --> RejectionMail["✉️ Courtesy Status Email"]
-        ReviewModal -- "Advance Stage" --> StageTransition["🚀 Move Candidate Stage\n(Idle Timer Resets to 0.0d)"]
-    end
-
-    subgraph Audit ["Compliance & Security"]
-        Dispatcher --> AuditLog[("📝 Immutable Audit Trail")]
-        StageTransition --> AuditLog
-        RejectionMail --> AuditLog
-    end
+flowchart LR
+    A[ATS CSV Export] --> B[Fast Ingestion & Storage]
+    B --> C[Deterministic SLA Scanner]
+    C -->|Idle > SLA Threshold| D[Priority Overdue Alert]
+    D --> E[Contextual AI Outreach Draft]
+    E -->|Recruiter 1-Click Approve| F[Real Email to Candidate]
+    F --> G[Alert Resolved & Dwell Reset to 0.0d]
 ```
 
 ---
 
-## 🌟 Key Features
+## 🌐 Live Production URLs
 
-| Capability | Technical Description | Business Impact |
-| :--- | :--- | :--- |
-| **Deterministic Stall Scanner** | Mathematically computes dwell duration without AI hallucination. | Zero false-positive or missed candidate escalations. |
-| **Multi-Stage SLA Configuration** | Dynamic threshold configuration per interview stage. | Adaptable to distinct engineering, product, or sales hiring bars. |
-| **1-Click Message Regeneration** | Generates alternative respectful phrasing variants on demand. | Recruiter saves time crafting contextual follow-ups. |
-| **Stage Progression & Timer Reset** | Move candidates across stages; dwell days auto-reset to `0.0d`. | Complete closed-loop candidate CRM lifecycle. |
-| **Real SMTP Candidate Delivery** | Dual-flow email dispatch (Approval update & polite rejection). | High candidate engagement and brand reputation. |
-| **Files & Ingestion History** | Track all uploaded batches with size, row count, and download. | Full traceability and batch auditability. |
-| **Unified Deletion Governance** | Clean top toolbar delete mode with select-all & bulk delete. | Intuitive, clutter-free enterprise UI experience. |
-| **Zero-Bias AI Guardrails** | Strictly operational coordination; never ranks employability. | Complete adherence to EEOC fairness and hiring compliance. |
+| Component | Platform | URL |
+|---|---|---|
+| **Recruiter Dashboard** | Vercel | [https://stall-alert.vercel.app](https://stall-alert.vercel.app) |
+| **Backend API Root** | Render | [https://stall-alert.onrender.com](https://stall-alert.onrender.com) |
+| **Interactive API Docs (Swagger)** | Render | [https://stall-alert.onrender.com/docs](https://stall-alert.onrender.com/docs) |
+| **Alternative Docs (ReDoc)** | Render | [https://stall-alert.onrender.com/redoc](https://stall-alert.onrender.com/redoc) |
+| **API Health Check** | Render | [https://stall-alert.onrender.com/health](https://stall-alert.onrender.com/health) |
 
 ---
 
-## 💻 Tech Stack
+## ✨ Key Features & Capabilities
 
-- **Frontend:** Next.js 16.4 (App Router, Turbopack, React 19, TypeScript 5.0)
-- **Styling:** Custom Enterprise B2B Design System (WCAG 2.2 AA compliant, mobile-first responsive bottom sheets)
-- **Backend:** FastAPI (Python 3.11+, Pydantic v2 schemas, ASGI asynchronous runtime)
-- **Database:** SQLite 3 with Write-Ahead Logging (WAL) and B-Tree indexes (PostgreSQL-ready)
-- **Email Service:** Python `smtplib` + MIME multipart HTML/Text with TLS encryption
-- **DevOps:** Docker, Docker Compose, GitHub Actions CI, Vercel & Render Cloud Hosting
+- **Deterministic SLA Breach Detection:** Alert severity (*Medium*, *High*, *Critical*) is calculated using exact mathematical time elapsed ($T_{\text{current}} - T_{\text{entered}} > \text{SLA}$), not unpredictable AI guesses.
+- **1-Click Review & Approve:** Clean outreach modal with instant optimistic dismissal. No lag, no double-clicking.
+- **1-Click Draft Regeneration:** Re-synthesize and rewrite follow-up messages instantly with the *Regenerate* button.
+- **Candidate Stage Progression:** Move candidates forward (e.g. *Phone Screen* $\rightarrow$ *Technical Interview*) directly from the dashboard or approval modal. Automatically resets candidate dwell time to `0.0 days` and resolves active alerts.
+- **Files & Batches Audit Section:** Complete historical view of all ingested CSV files with metadata and one-click re-download capability.
+- **Real SMTP Candidate Delivery:** Approved messages and polite rejections are delivered directly to candidate email addresses.
+- **Bulk Delete Operations:** Easily clean up candidate batches and dismissed alerts with select-all tools.
+- **Immutable Audit Log:** Chronological, read-only record tracking every import, scan, approval, and stage advancement.
 
 ---
 
-## ⚡ Quick Start (Local Run)
+## 🛠️ Step-by-Step Local Setup & Run Guide
 
-### 1. Prerequisites
-- Python 3.11+
-- Node.js 18+ and npm
+Running Stall Alerter on your local machine is straightforward. Follow these steps.
 
-### 2. Backend Setup
+### Step 1: Clone the Repository
+Open your terminal or command prompt and clone the repository:
 ```bash
-# Clone the repository
 git clone https://github.com/ajayroll1/Stall_Alert.git
 cd Stall_Alert
-
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Start FastAPI server
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-- API Base URL: `http://127.0.0.1:8000`
-- Interactive Swagger UI: `http://127.0.0.1:8000/docs`
 
-### 3. Frontend Setup
-```bash
-# In a new terminal, navigate to web directory
-cd web
-npm install
+---
 
-# Start Next.js development server
-npm run dev
+### Step 2: Set Up & Run the Backend (Python FastAPI)
+
+1. **Verify Python Installation:**
+   Ensure Python 3.11+ or 3.14+ is installed:
+   ```bash
+   python --version
+   ```
+
+2. **Install Python Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Configure Environment Variables:**
+   Copy the example environment template:
+   ```bash
+   cp .env.example .env
+   ```
+   *(For local testing, the default settings work right out of the box).*
+
+4. **Start the FastAPI Backend Server:**
+   ```bash
+   python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+   ```
+   - **Backend URL:** `http://127.0.0.1:8000`
+   - **Interactive Swagger Docs:** `http://127.0.0.1:8000/docs`
+   - **Healthcheck:** `http://127.0.0.1:8000/health`
+
+---
+
+### Step 3: Set Up & Run the Frontend (Next.js 16)
+
+Open a **new terminal window** in the project directory:
+
+1. **Navigate to the `web` Directory:**
+   ```bash
+   cd web
+   ```
+
+2. **Install Node.js Packages:**
+   ```bash
+   npm install
+   ```
+
+3. **Verify Local Environment File:**
+   Ensure a file named `.env.local` exists inside the `web` folder with these contents:
+   ```env
+   NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+   NEXT_PUBLIC_API_KEY=dev-stall-alerter-secret-key-32chars-min
+   ```
+
+4. **Start the Next.js Development Server:**
+   ```bash
+   npm run dev
+   ```
+   - **Recruiter Console URL:** `http://localhost:3000` (or `http://localhost:3000/dashboard`)
+
+---
+
+### Step 4: Quick One-Click Run (Windows Users)
+If you are on Windows, you can start both the backend and frontend simultaneously by double-clicking:
+```cmd
+start_all.bat
 ```
-- Recruiter Dashboard: `http://localhost:3000/dashboard`
 
 ---
 
-## 🚀 Live Cloud Deployment
+## 🧪 Testing the System (Step-by-Step Walkthrough)
 
-For detailed free hosting instructions on **Render** (Backend) and **Vercel** (Frontend), refer to [`DEPLOYMENT.md`](DEPLOYMENT.md).
-
----
-
-## 📜 Documentation Directory
-
-- [`INTENT.md`](INTENT.md) — Product philosophy, engineering architecture, and problem statement.
-- [`WORKING.md`](WORKING.md) — Step-by-step lifecycle workflows, state diagrams, and SLA formulas.
-- [`COMMAND.md`](COMMAND.md) — Complete CLI execution, testing, and deployment commands.
-- [`MARK.md`](MARK.md) — Production-grade feature completion checklist and verification records.
-- [`docs/API.md`](docs/API.md) — Comprehensive OpenAPI endpoint schemas and security contracts.
-- [`docs/SECURITY.md`](docs/SECURITY.md) — Authentication, CSV sanitization, and PII protection policies.
-- [`docs/AI_GUARDRAILS.md`](docs/AI_GUARDRAILS.md) — Non-negotiable fairness and AI governance boundaries.
+1. Open your browser and go to `http://localhost:3000/dashboard`.
+2. Click **+ Upload New CSV** or click the top-right import icon.
+3. Select the provided sample data file located at `examples/candidates.csv` (or any custom CSV export).
+4. Click **Upload & Process**. The system will show a green checkmark `✅ Success! Imported X rows` and auto-close smoothly.
+5. In the **Overdue Alerts** tab, click **Draft Follow-up** for any candidate who exceeded SLA.
+6. In the modal:
+   - Click **Regenerate** if you'd like an alternative draft.
+   - Choose a new stage from the dropdown if you want to advance the candidate.
+   - Click **Approve Message** to send the email and resolve the alert!
 
 ---
 
-## 📄 License
-Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
+## 📁 Project Structure
+
+```
+Stall_Alert/
+├── app/                  # FastAPI backend server
+│   ├── __init__.py
+│   └── main.py           # Core REST API, SLA logic, database initialization, email service
+├── docs/                 # Complete project documentation & reflections
+│   ├── DIRECTIVE.md      # Core architectural charter & non-negotiables
+│   ├── 5_DAY_LOGBOOK.md  # Detailed chronological 5-day engineering log
+│   ├── UNLEARNED.md      # A one-page reflection on what we unlearned
+│   ├── API.md            # Complete REST API reference & payload contracts
+│   ├── ARCHITECTURE.md   # System architecture diagrams & data model (ERD)
+│   ├── SECURITY.md       # STRIDE threat model & data defense policies
+│   └── TECH_STACK.md     # Technology choices and justification
+├── examples/             # Sample datasets for testing (candidates.csv)
+├── web/                  # Next.js 16 frontend application
+│   ├── src/
+│   │   ├── app/          # App router pages (dashboard/page.tsx, landing page)
+│   │   ├── components/   # UI components (ProductTourModal, FluidFooter, Modals)
+│   │   ├── api.ts        # Typed API client
+│   │   └── types.ts      # TypeScript data models
+│   ├── package.json
+│   └── .env.local        # Frontend environment config
+├── Dockerfile            # Container definition
+├── docker-compose.yml    # Multi-container orchestration
+├── requirements.txt      # Python dependencies
+├── start_all.bat         # Windows one-click local launcher
+└── README.md             # This document
+```
+
+---
+
+## 📄 Key Engineering Documentation Links
+
+- 📋 [**Final Directive (docs/DIRECTIVE.md)**](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/DIRECTIVE.md): System charter, core problem, and non-negotiables.
+- 📅 [**5-Day Engineering Logbook (docs/5_DAY_LOGBOOK.md)**](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/5_DAY_LOGBOOK.md): Realistic, chronological daily log of how Stall Alerter was built.
+- 💡 [**What We Unlearned (docs/UNLEARNED.md)**](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/UNLEARNED.md): Real-world reflections on simplicity, AI hype, and human governance.
+- 🔌 [**REST API Documentation (docs/API.md)**](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/API.md): Request and response schemas for all endpoints.
+- 🏗️ [**System Architecture (docs/ARCHITECTURE.md)**](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/ARCHITECTURE.md): Component diagrams, sequence flows, and database ERD.
+- 🛡️ [**Security Specification (docs/SECURITY.md)**](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/SECURITY.md): Threat modeling, sanitization, and secrets management.
+
+---
+
+## ⚖️ License
+Released under the MIT License. Built with care for engineering and talent teams worldwide.
