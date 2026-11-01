@@ -10,9 +10,9 @@
 ---
 
 ## 📌 What is Stall Alerter?
-**Stall Alerter** is an operational console built for talent acquisition teams and recruiters. It stops candidates from falling through the cracks by actively monitoring how long each applicant has been waiting at their current interview stage.
+Stall Alerter is an operational console built for talent acquisition teams and recruiters. It stops candidates from falling through the cracks by actively monitoring how long each applicant has been waiting at their current interview stage.
 
-When a candidate exceeds the company's agreed-upon Service Level Agreement (SLA), Stall Alerter flags them with a clear priority alert, writes a personalized update email, and allows the recruiter to review, edit, advance their stage, and send the email with **a single click**.
+When a candidate exceeds the company's agreed-upon Service Level Agreement (SLA), Stall Alerter flags them with a clear priority alert, writes a personalized update email, and allows the recruiter to review, edit, advance their stage, and send the email with a single click.
 
 ```mermaid
 flowchart LR
@@ -30,24 +30,24 @@ flowchart LR
 
 | Component | Platform | URL |
 |---|---|---|
-| **Recruiter Dashboard** | Vercel | [https://stall-alert.vercel.app](https://stall-alert.vercel.app) |
-| **Backend API Root** | Render | [https://stall-alert.onrender.com](https://stall-alert.onrender.com) |
-| **Interactive API Docs (Swagger)** | Render | [https://stall-alert.onrender.com/docs](https://stall-alert.onrender.com/docs) |
-| **Alternative Docs (ReDoc)** | Render | [https://stall-alert.onrender.com/redoc](https://stall-alert.onrender.com/redoc) |
-| **API Health Check** | Render | [https://stall-alert.onrender.com/health](https://stall-alert.onrender.com/health) |
+| Recruiter Dashboard | Vercel | [https://stall-alert.vercel.app](https://stall-alert.vercel.app) |
+| Backend API Root | Render | [https://stall-alert.onrender.com](https://stall-alert.onrender.com) |
+| Interactive API Docs (Swagger) | Render | [https://stall-alert.onrender.com/docs](https://stall-alert.onrender.com/docs) |
+| Alternative Docs (ReDoc) | Render | [https://stall-alert.onrender.com/redoc](https://stall-alert.onrender.com/redoc) |
+| API Health Check | Render | [https://stall-alert.onrender.com/health](https://stall-alert.onrender.com/health) |
 
 ---
 
 ## ✨ Key Features & Capabilities
 
-- **Deterministic SLA Breach Detection:** Alert severity (*Medium*, *High*, *Critical*) is calculated using exact mathematical time elapsed ($T_{\text{current}} - T_{\text{entered}} > \text{SLA}$), not unpredictable AI guesses.
-- **1-Click Review & Approve:** Clean outreach modal with instant optimistic dismissal. No lag, no double-clicking.
-- **1-Click Draft Regeneration:** Re-synthesize and rewrite follow-up messages instantly with the *Regenerate* button.
-- **Candidate Stage Progression:** Move candidates forward (e.g. *Phone Screen* $\rightarrow$ *Technical Interview*) directly from the dashboard or approval modal. Automatically resets candidate dwell time to `0.0 days` and resolves active alerts.
-- **Files & Batches Audit Section:** Complete historical view of all ingested CSV files with metadata and one-click re-download capability.
-- **Real SMTP Candidate Delivery:** Approved messages and polite rejections are delivered directly to candidate email addresses.
-- **Bulk Delete Operations:** Easily clean up candidate batches and dismissed alerts with select-all tools.
-- **Immutable Audit Log:** Chronological, read-only record tracking every import, scan, approval, and stage advancement.
+- Deterministic SLA Breach Detection: Alert severity (*Medium*, *High*, *Critical*) is calculated using exact mathematical time elapsed ($T_{\text{current}} - T_{\text{entered}} > \text{SLA}$), not unpredictable AI guesses.
+- 1-Click Review & Approve: Clean outreach modal with instant optimistic dismissal. No lag, no double-clicking.
+- 1-Click Draft Regeneration: Re-synthesize and rewrite follow-up messages instantly with the *Regenerate* button.
+- Candidate Stage Progression: Move candidates forward (e.g. *Phone Screen* $\rightarrow$ *Technical Interview*) directly from the dashboard or approval modal. Automatically resets candidate dwell time to `0.0 days` and resolves active alerts.
+- Files & Batches Audit Section: Complete historical view of all ingested CSV files with metadata and one-click re-download capability.
+- Real SMTP Candidate Delivery: Approved messages and polite rejections are delivered directly to candidate email addresses.
+- Bulk Delete Operations: Easily clean up candidate batches and dismissed alerts with select-all tools.
+- Immutable Audit Log: Chronological, read-only record tracking every import, scan, approval, and stage advancement.
 
 ---
 
@@ -66,60 +66,60 @@ cd Stall_Alert
 
 ### Step 2: Set Up & Run the Backend (Python FastAPI)
 
-1. **Verify Python Installation:**
+1. Verify Python Installation:
    Ensure Python 3.11+ or 3.14+ is installed:
    ```bash
    python --version
    ```
 
-2. **Install Python Dependencies:**
+2. Install Python Dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Configure Environment Variables:**
+3. Configure Environment Variables:
    Copy the example environment template:
    ```bash
    cp .env.example .env
    ```
    *(For local testing, the default settings work right out of the box).*
 
-4. **Start the FastAPI Backend Server:**
+4. Start the FastAPI Backend Server:
    ```bash
    python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
    ```
-   - **Backend URL:** `http://127.0.0.1:8000`
-   - **Interactive Swagger Docs:** `http://127.0.0.1:8000/docs`
-   - **Healthcheck:** `http://127.0.0.1:8000/health`
+   - Backend URL: `http://127.0.0.1:8000`
+   - Interactive Swagger Docs: `http://127.0.0.1:8000/docs`
+   - Healthcheck: `http://127.0.0.1:8000/health`
 
 ---
 
 ### Step 3: Set Up & Run the Frontend (Next.js 16)
 
-Open a **new terminal window** in the project directory:
+Open a new terminal window in the project directory:
 
-1. **Navigate to the `web` Directory:**
+1. Navigate to the `web` Directory:
    ```bash
    cd web
    ```
 
-2. **Install Node.js Packages:**
+2. Install Node.js Packages:
    ```bash
    npm install
    ```
 
-3. **Verify Local Environment File:**
+3. Verify Local Environment File:
    Ensure a file named `.env.local` exists inside the `web` folder with these contents:
    ```env
    NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
    NEXT_PUBLIC_API_KEY=dev-stall-alerter-secret-key-32chars-min
    ```
 
-4. **Start the Next.js Development Server:**
+4. Start the Next.js Development Server:
    ```bash
    npm run dev
    ```
-   - **Recruiter Console URL:** `http://localhost:3000` (or `http://localhost:3000/dashboard`)
+   - Recruiter Console URL: `http://localhost:3000` (or `http://localhost:3000/dashboard`)
 
 ---
 
@@ -134,14 +134,14 @@ start_all.bat
 ## 🧪 Testing the System (Step-by-Step Walkthrough)
 
 1. Open your browser and go to `http://localhost:3000/dashboard`.
-2. Click **+ Upload New CSV** or click the top-right import icon.
+2. Click + Upload New CSV or click the top-right import icon.
 3. Select the provided sample data file located at `examples/candidates.csv` (or any custom CSV export).
-4. Click **Upload & Process**. The system will show a green checkmark `✅ Success! Imported X rows` and auto-close smoothly.
-5. In the **Overdue Alerts** tab, click **Draft Follow-up** for any candidate who exceeded SLA.
+4. Click Upload & Process. The system will show a green checkmark `✅ Success! Imported X rows` and auto-close smoothly.
+5. In the Overdue Alerts tab, click Draft Follow-up for any candidate who exceeded SLA.
 6. In the modal:
-   - Click **Regenerate** if you'd like an alternative draft.
+   - Click Regenerate if you'd like an alternative draft.
    - Choose a new stage from the dropdown if you want to advance the candidate.
-   - Click **Approve Message** to send the email and resolve the alert!
+   - Click Approve Message to send the email and resolve the alert!
 
 ---
 
@@ -180,12 +180,12 @@ Stall_Alert/
 
 ## 📄 Key Engineering Documentation Links
 
-- 📋 [**Final Directive (docs/DIRECTIVE.md)**](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/DIRECTIVE.md): System charter, core problem, and non-negotiables.
-- 📅 [**5-Day Engineering Logbook (docs/5_DAY_LOGBOOK.md)**](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/5_DAY_LOGBOOK.md): Realistic, chronological daily log of how Stall Alerter was built.
-- 💡 [**What We Unlearned (docs/UNLEARNED.md)**](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/UNLEARNED.md): Real-world reflections on simplicity, AI hype, and human governance.
-- 🔌 [**REST API Documentation (docs/API.md)**](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/API.md): Request and response schemas for all endpoints.
-- 🏗️ [**System Architecture (docs/ARCHITECTURE.md)**](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/ARCHITECTURE.md): Component diagrams, sequence flows, and database ERD.
-- 🛡️ [**Security Specification (docs/SECURITY.md)**](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/SECURITY.md): Threat modeling, sanitization, and secrets management.
+- 📋 [Final Directive (docs/DIRECTIVE.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/DIRECTIVE.md): System charter, core problem, and non-negotiables.
+- 📅 [5-Day Engineering Logbook (docs/5_DAY_LOGBOOK.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/5_DAY_LOGBOOK.md): Realistic, chronological daily log of how Stall Alerter was built.
+- 💡 [What We Unlearned (docs/UNLEARNED.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/UNLEARNED.md): Real-world reflections on simplicity, AI hype, and human governance.
+- 🔌 [REST API Documentation (docs/API.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/API.md): Request and response schemas for all endpoints.
+- 🏗️ [System Architecture (docs/ARCHITECTURE.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/ARCHITECTURE.md): Component diagrams, sequence flows, and database ERD.
+- 🛡️ [Security Specification (docs/SECURITY.md)](file:///C:/Users/LENOVO/Desktop/Stall_Alert/docs/SECURITY.md): Threat modeling, sanitization, and secrets management.
 
 ---
 
