@@ -67,3 +67,14 @@ export interface ImportResponse {
   error_count: number;
   errors: Array<{ row: number; error: string }>;
 }
+
+export interface UploadedFileRecord {
+  id: string;
+  filename: string;
+  file_size_bytes: number;
+  row_count: number;
+  error_count: number;
+  uploaded_by: string;
+  status: string;
+  created_at: string;
+}

@@ -1,4 +1,4 @@
-import { AlertItem, AuditRecord, Candidate, FollowupAction, ImportResponse, MetricSummary, SLARule } from "./types";
+import { AlertItem, AuditRecord, Candidate, FollowupAction, ImportResponse, MetricSummary, SLARule, UploadedFileRecord } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "dev-stall-alerter-secret-key-32chars-min";
@@ -174,4 +174,23 @@ export async function uploadCandidatesCsv(file: File): Promise<ImportResponse> {
     throw new Error(errorJson.detail || "Failed to import CSV");
   }
   return res.json();
+}
+
+
+export async function fetchUploadedFiles(): Promise<UploadedFileRecord[]> {
+  const res = await fetch(`${API_BASE}/api/files`, { headers: defaultHeaders, cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch uploaded files history");
+  return res.json();
+}
+
+export function getFileDownloadUrl(fileId: string): string {
+  return `${API_BASE}/api/files/${fileId}/download`;
+}
+
+export async function deleteUploadedFile(fileId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/files/${fileId}`, {
+    method: "DELETE",
+    headers: defaultHeaders,
+  });
+  if (!res.ok) throw new Error("Failed to delete file history record");
 }

@@ -117,6 +117,18 @@ def init_db() -> None:
             timestamp TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS uploaded_files (
+            id TEXT PRIMARY KEY,
+            filename TEXT NOT NULL,
+            file_size_bytes INTEGER NOT NULL,
+            row_count INTEGER NOT NULL,
+            error_count INTEGER NOT NULL,
+            uploaded_by TEXT NOT NULL,
+            content TEXT,
+            status TEXT NOT NULL DEFAULT 'completed',
+            created_at TEXT NOT NULL
+        );
+
         -- Performance Query Indexes (10x search & list speedup)
         CREATE INDEX IF NOT EXISTS idx_candidates_stage ON candidates(stage);
         CREATE INDEX IF NOT EXISTS idx_candidates_stage_time ON candidates(stage, stage_entered_at);
@@ -240,6 +252,16 @@ class AuditLogEntry(BaseModel):
     entity_id: str
     details: Optional[str] = None
     timestamp: str
+
+class UploadedFileOut(BaseModel):
+    id: str
+    filename: str
+    file_size_bytes: int
+    row_count: int
+    error_count: int
+    uploaded_by: str
+    status: str
+    created_at: str
 
 # -----------------------------------------------------------------------------
 # Domain Helpers (Deterministic & Auditable + Business Day Calendar)
@@ -436,11 +458,24 @@ async def import_candidates(file: UploadFile = File(...), _: str = Depends(verif
         )
         success_count += 1
 
-    log_audit(conn, actor="operator", action="CSV_IMPORT", entity_type="batch", entity_id=file.filename, details=f"imported={success_count}, errors={len(errors)}")
+    file_id = str(uuid.uuid4())
+    file_size = len(contents)
+    file_text_content = content_str if file_size < 500000 else content_str[:500000] # store CSV text up to 500KB
+
+    conn.execute(
+        """
+        INSERT INTO uploaded_files (id, filename, file_size_bytes, row_count, error_count, uploaded_by, content, status, created_at)
+        VALUES (?, ?, ?, ?, ?, 'Recruiter Lead', ?, 'completed', ?)
+        """,
+        (file_id, file.filename, file_size, success_count, len(errors), file_text_content, now_iso)
+    )
+
+    log_audit(conn, actor="operator", action="CSV_IMPORT", entity_type="file", entity_id=file.filename, details=f"file_id={file_id}, imported={success_count}, errors={len(errors)}")
     conn.commit()
     conn.close()
 
     return {
+        "file_id": file_id,
         "filename": file.filename,
         "imported_rows": success_count,
         "error_count": len(errors),
@@ -885,6 +920,55 @@ def send_notification_digest(payload: NotificationTestPayload, _: str = Depends(
         },
         "message": f"Pipeline digest dispatched with {total_open} open alerts ({critical_alerts} Critical)."
     }
+
+
+# -----------------------------------------------------------------------------
+# Uploaded Files Management Endpoints
+# -----------------------------------------------------------------------------
+@app.get("/api/files", response_model=List[UploadedFileOut], tags=["Files"])
+def list_uploaded_files(_: str = Depends(verify_api_key)) -> List[Dict[str, Any]]:
+    """List all previously uploaded and processed CSV candidate files."""
+    conn = get_db_connection()
+    rows = conn.execute(
+        """
+        SELECT id, filename, file_size_bytes, row_count, error_count, uploaded_by, status, created_at
+        FROM uploaded_files
+        ORDER BY created_at DESC
+        """
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+@app.get("/api/files/{file_id}/download", tags=["Files"])
+def download_uploaded_file(file_id: str, _: str = Depends(verify_api_key)) -> Any:
+    """Download original processed CSV file content."""
+    from fastapi.responses import Response
+    conn = get_db_connection()
+    row = conn.execute("SELECT filename, content FROM uploaded_files WHERE id = ?", (file_id,)).fetchone()
+    conn.close()
+    if not row or not row["content"]:
+        raise HTTPException(status_code=404, detail="File content not found or expired.")
+    
+    return Response(
+        content=row["content"],
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{row["filename"]}"'}
+    )
+
+@app.delete("/api/files/{file_id}", tags=["Files"])
+def delete_uploaded_file_record(file_id: str, _: str = Depends(verify_api_key)) -> Dict[str, Any]:
+    """Remove an uploaded file history entry."""
+    conn = get_db_connection()
+    row = conn.execute("SELECT filename FROM uploaded_files WHERE id = ?", (file_id,)).fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="File record not found.")
+
+    conn.execute("DELETE FROM uploaded_files WHERE id = ?", (file_id,))
+    log_audit(conn, actor="operator", action="DELETE_FILE_RECORD", entity_type="file", entity_id=file_id, details=f"deleted file record {row['filename']}")
+    conn.commit()
+    conn.close()
+    return {"message": "File history record deleted successfully", "file_id": file_id}
 
 # -----------------------------------------------------------------------------
 # Deletion & Pipeline Governance Endpoints (Single & Bulk Delete)

@@ -23,12 +23,19 @@ import {
   deleteRule,
   clearAuditLogs,
   updateCandidateStage,
+  fetchUploadedFiles,
+  deleteUploadedFile,
 } from "../../api";
-import { AlertItem, AuditRecord, Candidate, FollowupAction, MetricSummary, SLARule } from "../../types";
+import { AlertItem, AuditRecord, Candidate, FollowupAction, MetricSummary, SLARule, UploadedFileRecord } from "../../types";
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<"alerts" | "candidates" | "drafts" | "rules" | "audit">("alerts");
+  const [activeTab, setActiveTab] = useState<"alerts" | "candidates" | "drafts" | "rules" | "files" | "audit">("alerts");
+
+  // Uploaded Files State
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFileRecord[]>([]);
+  const [filesPage, setFilesPage] = useState<number>(1);
+  const [selectedFileContent, setSelectedFileContent] = useState<{ filename: string; content: string } | null>(null);
   const [showTour, setShowTour] = useState<boolean>(false);
 
   // Metrics
@@ -112,13 +119,14 @@ export default function DashboardPage() {
 
   const refreshAll = async () => {
     try {
-      const [m, a, c, d, r, log] = await Promise.all([
+      const [m, a, c, d, r, log, filesData] = await Promise.all([
         fetchMetrics(),
         fetchAlerts(statusFilter, severityFilter),
         fetchCandidates(searchQuery),
         fetchActions(),
         fetchRules(),
         fetchAuditLogs(),
+        fetchUploadedFiles().catch(() => []),
       ]);
       setMetrics(m);
       setAlerts(a);
@@ -126,6 +134,7 @@ export default function DashboardPage() {
       setDrafts(d);
       setRules(r);
       setAuditLogs(log);
+      setUploadedFiles(filesData);
     } catch (err) {
       console.error("Failed to load pipeline state:", err);
     }
@@ -311,6 +320,17 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDeleteUploadedFile = async (fileId: string, filename: string) => {
+    if (!window.confirm(`Delete history entry for '${filename}'? (Candidate records already ingested will remain intact)`)) return;
+    try {
+      await deleteUploadedFile(fileId);
+      showToast(`File record '${filename}' removed`);
+      await refreshAll();
+    } catch {
+      showToast("Failed to delete file record");
+    }
+  };
+
   const handleUpdateRule = async (stage: string) => {
     const max_days = ruleEdits[stage];
     if (!max_days || max_days < 1) {
@@ -481,6 +501,13 @@ export default function DashboardPage() {
             onClick={() => setActiveTab("rules")}
           >
             Stage SLA Rules
+          </button>
+          <button
+            id="tab-btn-files"
+            className={`nav-tab ${activeTab === "files" ? "active" : ""}`}
+            onClick={() => setActiveTab("files")}
+          >
+            Files & Batches ({uploadedFiles.length})
           </button>
           <button
             id="tab-btn-audit"
@@ -1175,6 +1202,165 @@ export default function DashboardPage() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </section>
+        )}
+
+        {/* TAB: FILES & BATCHES */}
+        {activeTab === "files" && (
+          <section id="tour-target-files-section" className="tab-pane-content">
+            <div id="tour-target-files-toolbar" className="action-toolbar">
+              <div className="toolbar-left">
+                <span className="stat-label">Ingested CSV File Records & Ingestion History</span>
+              </div>
+              <div className="toolbar-right" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowImportModal(true)}
+                >
+                  + Upload New CSV
+                </button>
+                <span className="stat-label" style={{ margin: 0 }}>
+                  {uploadedFiles.length} files on record
+                </span>
+              </div>
+            </div>
+
+            <div id="tour-files-table-card" className="table-card">
+              <div className="table-responsive">
+                <table className="ops-table">
+                  <thead>
+                    <tr>
+                      <th>File Name</th>
+                      <th>Uploaded At (UTC)</th>
+                      <th>Uploaded By</th>
+                      <th>Candidates Ingested</th>
+                      <th>Errors</th>
+                      <th>File Size</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const totalPages = Math.max(1, Math.ceil(uploadedFiles.length / PAGE_SIZE));
+                      const paginatedFiles = uploadedFiles.slice(
+                        (filesPage - 1) * PAGE_SIZE,
+                        filesPage * PAGE_SIZE
+                      );
+
+                      if (uploadedFiles.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={8} style={{ textAlign: "center", padding: "3rem 1rem", color: "var(--text-muted)" }}>
+                              <div style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>📁</div>
+                              <strong>No CSV files uploaded yet.</strong>
+                              <div style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>
+                                Upload candidate pipeline exports via the "Import CSV" button to view ingestion history.
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return paginatedFiles.map((f) => (
+                        <tr key={f.id}>
+                          <td>
+                            <strong>📄 {f.filename}</strong>
+                            <br />
+                            <small style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                              ID: {f.id.slice(0, 8)}...
+                            </small>
+                          </td>
+                          <td>
+                            <small style={{ fontFamily: "var(--font-mono)" }}>
+                              {new Date(f.created_at).toLocaleString()}
+                            </small>
+                          </td>
+                          <td><strong>{f.uploaded_by}</strong></td>
+                          <td>
+                            <span className="badge badge-medium">{f.row_count} rows</span>
+                          </td>
+                          <td>
+                            {f.error_count > 0 ? (
+                              <span className="badge badge-critical">{f.error_count} errors</span>
+                            ) : (
+                              <span style={{ color: "var(--text-muted)" }}>0</span>
+                            )}
+                          </td>
+                          <td>
+                            <small>{(f.file_size_bytes / 1024).toFixed(1)} KB</small>
+                          </td>
+                          <td>
+                            <span className="badge badge-neutral">{f.status}</span>
+                          </td>
+                          <td>
+                            <div style={{ display: "flex", gap: "0.4rem" }}>
+                              <a
+                                href={`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/files/${f.id}/download`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn btn-secondary btn-sm"
+                                style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem", textDecoration: "none" }}
+                                title="Download processed CSV"
+                              >
+                                ⬇ Download
+                              </a>
+                              <button
+                                className="btn btn-danger btn-sm"
+                                style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem" }}
+                                onClick={() => handleDeleteUploadedFile(f.id, f.filename)}
+                                title="Delete file history"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination for Files */}
+              {(() => {
+                const totalPages = Math.ceil(uploadedFiles.length / PAGE_SIZE);
+                if (totalPages <= 1) return null;
+
+                return (
+                  <div className="pagination-bar">
+                    <div className="pagination-info">
+                      Showing Page <strong>{filesPage}</strong> of <strong>{totalPages}</strong> ({uploadedFiles.length} total files)
+                    </div>
+                    <div className="pagination-controls">
+                      <button
+                        className="page-btn"
+                        disabled={filesPage === 1}
+                        onClick={() => setFilesPage((p) => Math.max(1, p - 1))}
+                      >
+                        &larr; Prev
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+                        <button
+                          key={num}
+                          className={`page-btn ${filesPage === num ? "active" : ""}`}
+                          onClick={() => setFilesPage(num)}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                      <button
+                        className="page-btn"
+                        disabled={filesPage === totalPages}
+                        onClick={() => setFilesPage((p) => Math.min(totalPages, p + 1))}
+                      >
+                        Next &rarr;
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </section>
         )}
