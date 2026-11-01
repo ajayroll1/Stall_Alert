@@ -109,6 +109,18 @@ export default function DashboardPage() {
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState<boolean>(false);
 
+  const openImportModal = () => {
+    setSelectedFile(null);
+    setImportStatus(null);
+    setShowImportModal(true);
+  };
+
+  const closeImportModal = () => {
+    setShowImportModal(false);
+    setSelectedFile(null);
+    setImportStatus(null);
+  };
+
   // Toasts
   const [toasts, setToasts] = useState<Array<{ id: number; message: string }>>([]);
 
@@ -393,9 +405,12 @@ export default function DashboardPage() {
     try {
       const res = await uploadCandidatesCsv(selectedFile);
       setImportStatus(`Success! Imported ${res.imported_rows} rows (${res.error_count} errors)`);
-      showToast(`Imported ${res.imported_rows} candidates`);
+      showToast(`Success! Imported ${res.imported_rows} rows (${res.error_count} errors)`);
       await refreshAll();
       await handleScan();
+      setTimeout(() => {
+        closeImportModal();
+      }, 1500);
     } catch (err: any) {
       setImportStatus(`Failed: ${err.message}`);
       showToast("Upload failed");
@@ -451,7 +466,7 @@ export default function DashboardPage() {
           <button
             id="tour-step-import-btn"
             className="btn btn-secondary btn-icon-expand"
-            onClick={() => setShowImportModal(true)}
+            onClick={openImportModal}
             title="Import CSV Export"
             aria-label="Import CSV"
           >
@@ -1248,7 +1263,7 @@ export default function DashboardPage() {
               <div className="toolbar-right" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                 <button
                   className="btn btn-primary btn-sm"
-                  onClick={() => setShowImportModal(true)}
+                  onClick={openImportModal}
                 >
                   + Upload New CSV
                 </button>
@@ -1530,7 +1545,7 @@ export default function DashboardPage() {
           <div className="modal-window">
             <div className="modal-header">
               <h2>Import Candidate Applications (CSV)</h2>
-              <button className="btn btn-secondary btn-sm" onClick={() => setShowImportModal(false)}>✕</button>
+              <button className="btn btn-secondary btn-sm" onClick={closeImportModal}>✕</button>
             </div>
             <div className="modal-body">
               <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "1rem" }}>
@@ -1544,13 +1559,28 @@ export default function DashboardPage() {
                 />
               </div>
               {importStatus && (
-                <div style={{ padding: "0.75rem", background: "var(--bg-surface-subtle)", borderRadius: "var(--radius-sm)", fontSize: "0.85rem" }}>
-                  {importStatus}
+                <div
+                  style={{
+                    padding: "0.75rem 1rem",
+                    borderRadius: "var(--radius-sm)",
+                    fontSize: "0.85rem",
+                    fontWeight: 500,
+                    backgroundColor: importStatus.startsWith("Success") ? "rgba(16, 185, 129, 0.12)" : "rgba(239, 68, 68, 0.12)",
+                    color: importStatus.startsWith("Success") ? "#047857" : "#b91c1c",
+                    border: `1px solid ${importStatus.startsWith("Success") ? "rgba(16, 185, 129, 0.3)" : "rgba(239, 68, 68, 0.3)"}`,
+                    marginTop: "0.75rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <span>{importStatus.startsWith("Success") ? "✅" : "⚠️"}</span>
+                  <span>{importStatus}</span>
                 </div>
               )}
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowImportModal(false)}>Cancel</button>
+              <button className="btn btn-secondary" onClick={closeImportModal}>Cancel</button>
               <button className="btn btn-primary" onClick={handleFileUpload} disabled={isImporting}>
                 {isImporting ? "Uploading..." : "Upload & Process"}
               </button>
