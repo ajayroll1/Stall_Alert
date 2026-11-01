@@ -1,166 +1,144 @@
 # STALL ALERTER
-> Production-Grade, Security-First, AI-Enabled Hiring Pipeline Stall Detection & Operational Workflow Automation
+> Production-Grade, Security-First, Operational Recruiting Copilot for Candidate Stall Detection, SLA Governance, and Automated Candidate Communication.
 
 [![CI Pipeline](https://github.com/ajayroll1/Stall_Alert/actions/workflows/ci.yml/badge.svg)](https://github.com/ajayroll1/Stall_Alert/actions)
-[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2015%20(React%2019)-black?style=flat&logo=next.js)](https://nextjs.org)
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%200.141+-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
-[![Python](https://img.shields.io/badge/Python-3.14+-3776ab?style=flat&logo=python)](https://www.python.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5+-3178c6?style=flat&logo=typescript)](https://www.typescriptlang.org)
+[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2016%20(React%2019)-black?style=flat&logo=next.js)](https://nextjs.org)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%200.115+-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776ab?style=flat&logo=python)](https://www.python.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178c6?style=flat&logo=typescript)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ---
 
-## Executive Summary & Product Mission
-Hiring velocity suffers when candidates sit unattended in recruiting pipeline stages without timely follow-ups. Stall Alerter provides operations teams with transparent, explainable alerts when candidates exceed stage-specific Service Level Agreements (SLAs).
+## 📌 Executive Summary & Product Mission
 
-> Safety & Fairness Boundary:  
-> Stall Alerter is strictly a recruiting operations coordination tool, NOT an automated decision-maker. It never calculates employability scores, infers protected characteristics, or decides candidate suitability. Alert severity represents operational urgency, never candidate merit. External candidate communications require explicit authorized human approval.
+High-growth companies frequently lose top-tier talent not due to compensation or competition, but due to **unintentional pipeline stagnation**—candidates sitting unattended in an interview stage exceeding operational SLAs (Service Level Agreements) without proactive communication.
+
+**Stall Alerter** operates as a mission-critical operational co-pilot for talent acquisition leaders:
+1. **Detects Bottlenecks Deterministically:** Computes exact dwell days per candidate stage down to fractional decimals using UTC clock precision.
+2. **Prioritizes Urgency:** Automatically assigns severity tiers (*Medium $\ge 1\times$ SLA*, *High $\ge 1.5\times$ SLA*, *Critical $\ge 2.0\times$ SLA*).
+3. **Drafts Contextual Outreach & Message Regeneration:** Prepares personalized, respectful follow-up drafts with 1-click alternative tone regeneration.
+4. **Human-in-the-Loop Governance:** Enforces mandatory human approval before outbound email dispatch—zero autonomous AI actions leave without recruiter sign-off.
+5. **Real SMTP Email Dispatch:** Dispatches approved updates or polite rejection notices directly to candidates via secure SMTP (Gmail / Custom relay).
+6. **Complete Pipeline Lifecycle:** Moves candidates across interview stages directly from the UI, auto-resetting dwell timers to `0.0 days`.
+7. **Files & Batches Ingestion History:** Tracks every uploaded CSV with metadata, row counts, and 1-click re-download capability.
+8. **Immutable Compliance Audit Trail:** Records all operational decisions, deletions, and state transitions in an append-only audit event log.
 
 ---
 
-## System Architecture & Workflow
+## 🏛️ System Architecture
 
+```mermaid
+flowchart TD
+    subgraph Data Layer ["Data & Ingestion Layer"]
+        CSV["📁 Universal ATS CSV Export"] --> IngestionEngine["⚙️ Streaming CSV Validator & Sanitizer"]
+        IngestionEngine --> DB[("💾 Relational Database\n(SQLite WAL / PostgreSQL)")]
+        IngestionEngine --> FilesTable[("📑 Ingested Files & Batches History")]
+    end
+
+    subgraph SLA Engine ["Deterministic SLA Engine"]
+        Rules["⏱️ Configurable Stage SLAs\n(Recruiter Screen, Tech Round, Offer)"] --> Scanner["🔍 Deterministic Stall Scanner"]
+        DB --> Scanner
+        Scanner --> UrgencyGate{"Elapsed >= SLA?"}
+        UrgencyGate -- Yes --> AlertsQueue["🚨 Priority Overdue Alerts Inbox\n(Medium / High / Critical)"]
+        UrgencyGate -- No --> HealthyState["🟢 Pipeline Operating Within SLA"]
+    end
+
+    subgraph Governance ["Human-in-the-Loop Governance"]
+        AlertsQueue --> DraftEngine["✍️ Contextual Draft Generator"]
+        DraftEngine --> RegenEngine["🔄 1-Click Message Regeneration"]
+        DraftEngine --> ReviewModal{"👤 Recruiter Approval Modal"}
+        ReviewModal -- "Approve" --> Dispatcher["📧 Real SMTP Dispatcher\n(Follow-up Email to Candidate)"]
+        ReviewModal -- "Reject" --> RejectionMail["✉️ Courtesy Status Email"]
+        ReviewModal -- "Advance Stage" --> StageTransition["🚀 Move Candidate Stage\n(Idle Timer Resets to 0.0d)"]
+    end
+
+    subgraph Audit ["Compliance & Security"]
+        Dispatcher --> AuditLog[("📝 Immutable Audit Trail")]
+        StageTransition --> AuditLog
+        RejectionMail --> AuditLog
+    end
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        Recruiter Web Console                           │
-│     (Next.js 15, React 19, TypeScript, WCAG 2.2 AA Accessible UI)     │
-│       • Overdue Alerts Inbox       • Candidate Search Directory        │
-│       • Follow-up Approval Queue   • Stage SLA Rule Configuration      │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ HTTP / JSON (X-API-Key Protected)
-┌───────────────────────────────────▼────────────────────────────────────┐
-│                       FastAPI API Gateway                              │
-│       • Schema Validation (Pydantic v2) • Audit Event Logger           │
-│       • Streaming CSV Ingestion Engine  • Security Auth Dependencies   │
-└───────────────────┬────────────────────────────────┬───────────────────┘
-                    │                                │
-┌───────────────────▼──────────────────┐ ┌───────────▼───────────────────┐
-│     Deterministic SLA Engine         │ │   Human-in-the-Loop Gateway   │
-│  • Timezone-aware UTC elapsed math   │ │  • Evidence-based follow-ups  │
-│  • Severity Ranking:                 │ │  • State Machine:             │
-│    - Critical: >= 2.0x SLA           │ │    draft -> approved/rejected │
-│    - High:     >= 1.5x SLA           │ │  • Recruiter review & signoff │
-│    - Medium:   >= 1.0x SLA           │ │  • Zero autonomous auto-sends │
-└───────────────────┬──────────────────┘ └───────────┬───────────────────┘
-                    │                                │
-┌───────────────────▼────────────────────────────────▼───────────────────┐
-│                    ACID Relational Persistence                         │
-│       SQLite 3 (Dev / Local)  ──▶  Managed PostgreSQL (Prod Target)    │
-│       Tables: candidates, rules, alerts, actions, audit_events         │
-└────────────────────────────────────────────────────────────────────────┘
-```
 
 ---
 
-## Core Features & Capabilities
+## 🌟 Key Features
 
-1. Deterministic SLA Monitoring: Evaluates candidate time-in-stage using UTC math. Zero LLM hallucinations in SLA calculations.
-2. Deduplicated Ingestion: Validates candidate CSV exports, protects against CSV formula injection, and performs idempotent upserts on `external_id`.
-3. Operational Severity Ranking: Automatic categorization into `Critical`, `High`, and `Medium` overdue alerts.
-4. Human-in-the-Loop Outreach: Evidence-based, neutral communication drafting with explicit recruiter review and approval gates.
-5. Immutable Audit Trail: Append-only chronological logging of every import, rule edit, scan, draft, and approval.
-6. Dual Frontend Options:
-   - Modern Next.js 15 (React 19, TS): Client-side reactive console with responsive mobile layouts, dynamic filters, pagination, and micro-animations.
-   - Embedded Vanilla Console: Lightweight zero-node fallback served directly by FastAPI at `/console/`.
-
----
-
-## Complete Technology Stack
-
-| Layer | Technology | Specification / Version |
-|---|---|---|
-| Web Frontend | Next.js 15+ (React 19) | TypeScript 5+, Turbopack, Accessible Modals, Toast Feedback, Smooth Animations |
-| Styling | Custom CSS Design Tokens | Warm B2B aesthetic (`#f9f8f6`, charcoal `#1d2125`, forest green `#1e3d34`) |
-| Backend API | FastAPI | Python 3.10+ (tested on Python 3.14), Uvicorn ASGI |
-| Data Validation | Pydantic v2 | Strict schema validation (`pydantic-core 2.46+`) |
-| Database | SQLite / PostgreSQL | Relational schema with foreign keys and idempotent upserts |
-| Testing | Pytest 9.2+ | Unit, API contract, and integration tests |
-| CI/CD & DevOps | GitHub Actions, Docker | Reproducible multi-stage Dockerfile and automated workflow |
+| Capability | Technical Description | Business Impact |
+| :--- | :--- | :--- |
+| **Deterministic Stall Scanner** | Mathematically computes dwell duration without AI hallucination. | Zero false-positive or missed candidate escalations. |
+| **Multi-Stage SLA Configuration** | Dynamic threshold configuration per interview stage. | Adaptable to distinct engineering, product, or sales hiring bars. |
+| **1-Click Message Regeneration** | Generates alternative respectful phrasing variants on demand. | Recruiter saves time crafting contextual follow-ups. |
+| **Stage Progression & Timer Reset** | Move candidates across stages; dwell days auto-reset to `0.0d`. | Complete closed-loop candidate CRM lifecycle. |
+| **Real SMTP Candidate Delivery** | Dual-flow email dispatch (Approval update & polite rejection). | High candidate engagement and brand reputation. |
+| **Files & Ingestion History** | Track all uploaded batches with size, row count, and download. | Full traceability and batch auditability. |
+| **Unified Deletion Governance** | Clean top toolbar delete mode with select-all & bulk delete. | Intuitive, clutter-free enterprise UI experience. |
+| **Zero-Bias AI Guardrails** | Strictly operational coordination; never ranks employability. | Complete adherence to EEOC fairness and hiring compliance. |
 
 ---
 
-## Quick Start Guide
+## 💻 Tech Stack
 
-### Prerequisites
-- Python 3.10+ (Tested on Python 3.14.7)
-- Node.js 18+ & npm (Tested on Node v24.20.0)
+- **Frontend:** Next.js 16.4 (App Router, Turbopack, React 19, TypeScript 5.0)
+- **Styling:** Custom Enterprise B2B Design System (WCAG 2.2 AA compliant, mobile-first responsive bottom sheets)
+- **Backend:** FastAPI (Python 3.11+, Pydantic v2 schemas, ASGI asynchronous runtime)
+- **Database:** SQLite 3 with Write-Ahead Logging (WAL) and B-Tree indexes (PostgreSQL-ready)
+- **Email Service:** Python `smtplib` + MIME multipart HTML/Text with TLS encryption
+- **DevOps:** Docker, Docker Compose, GitHub Actions CI, Vercel & Render Cloud Hosting
 
-### 1. Clone & Setup Repository
+---
+
+## ⚡ Quick Start (Local Run)
+
+### 1. Prerequisites
+- Python 3.11+
+- Node.js 18+ and npm
+
+### 2. Backend Setup
 ```bash
+# Clone the repository
 git clone https://github.com/ajayroll1/Stall_Alert.git
 cd Stall_Alert
-```
 
-### 2. Install Dependencies
-```powershell
-# Python Backend Dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 
-# Next.js Frontend Dependencies
+# Start FastAPI server
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+- API Base URL: `http://127.0.0.1:8000`
+- Interactive Swagger UI: `http://127.0.0.1:8000/docs`
+
+### 3. Frontend Setup
+```bash
+# In a new terminal, navigate to web directory
 cd web
 npm install
-cd ..
-```
 
-### 3. Run the Servers
-
-#### Option A: One-Click Windows Launcher
-Double-click [`start_all.bat`](file:///start_all.bat) or run:
-```powershell
-.\start_all.bat
-```
-
-#### Option B: Separate Terminals
-```powershell
-# Terminal 1 - Start FastAPI Backend (Port 8000)
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-
-# Terminal 2 - Start Next.js Frontend (Port 3000)
-cd web
+# Start Next.js development server
 npm run dev
 ```
-
-### 4. Access Interfaces
-- Next.js Web App: [http://localhost:3000](http://localhost:3000)
-- Interactive API Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- Health Check Probe: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+- Recruiter Dashboard: `http://localhost:3000/dashboard`
 
 ---
 
-## Testing & Verification
+## 🚀 Live Cloud Deployment
 
-Run the comprehensive automated pytest suite:
-```powershell
-python -m pytest tests/test_logic.py -v
-```
-
-Observed Test Results (100% Passed):
-```text
-tests/test_logic.py::test_compute_elapsed_days PASSED           [ 16%]
-tests/test_logic.py::test_determine_severity_thresholds PASSED  [ 33%]
-tests/test_logic.py::test_generate_followup_draft_content PASSED[ 50%]
-tests/test_logic.py::test_health_check_endpoint PASSED          [ 66%]
-tests/test_logic.py::test_auth_protection_on_rules PASSED       [ 83%]
-tests/test_logic.py::test_full_pipeline_flow PASSED             [100%]
-
-======================== 6 passed in 0.91s ========================
-```
+For detailed free hosting instructions on **Render** (Backend) and **Vercel** (Frontend), refer to [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ---
 
-## Security & Compliance
-- API Key Authentication: Protected via `X-API-Key` headers; unauthorized requests return HTTP 401.
-- SQL Injection Defense: Strict parameterized SQL queries across all endpoints.
-- Formula Injection Defense: CSV cells sanitized against spreadsheet formula exploitation (`=`, `@`, `+`, `-`).
-- No Autonomous Actions: Outbound messaging is strictly locked behind a human approval gate (`POST /api/actions/{id}/approval`).
+## 📜 Documentation Directory
+
+- [`INTENT.md`](INTENT.md) — Product philosophy, engineering architecture, and problem statement.
+- [`WORKING.md`](WORKING.md) — Step-by-step lifecycle workflows, state diagrams, and SLA formulas.
+- [`COMMAND.md`](COMMAND.md) — Complete CLI execution, testing, and deployment commands.
+- [`MARK.md`](MARK.md) — Production-grade feature completion checklist and verification records.
+- [`docs/API.md`](docs/API.md) — Comprehensive OpenAPI endpoint schemas and security contracts.
+- [`docs/SECURITY.md`](docs/SECURITY.md) — Authentication, CSV sanitization, and PII protection policies.
+- [`docs/AI_GUARDRAILS.md`](docs/AI_GUARDRAILS.md) — Non-negotiable fairness and AI governance boundaries.
 
 ---
 
-## Documentation Index
-- [`docs/TECH_STACK.md`](docs/TECH_STACK.md) — Comprehensive technical stack specification.
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — Architectural design, data flows, and trust boundaries.
-- [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) — Master implementation checklist with verified task statuses.
-- [`docs/SECURITY.md`](docs/SECURITY.md) — Threat model, security review, and mitigations.
-- [`docs/AI_GUARDRAILS.md`](docs/AI_GUARDRAILS.md) — AI safety policies and human-in-the-loop review criteria.
-- [`docs/API.md`](docs/API.md) — REST API schemas, endpoints, and authentication guide.
-- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — Production container deployment, backups, and operations runbook.
+## 📄 License
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.

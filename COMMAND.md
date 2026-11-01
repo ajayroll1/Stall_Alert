@@ -1,159 +1,139 @@
-# STALL ALERTER — COMMAND EXECUTION & DEPLOYMENT GUIDE (COMMAND.md)
+# STALL ALERTER — Command Execution & Deployment Playbook (v2.5.0)
 
-इस गाइड में प्रोजेक्ट को लोकल चलाने, टेस्ट करने और क्लाउड प्लेटफॉर्म्स पर डिप्लॉय करने के सभी कमांड्स दिए गए हैं।
-
----
-
-## 1. लोकल डेवलपमेंट कमांड्स (Local Run Commands)
-
-### A. बैकएंड चलाना (FastAPI + Python)
-1. डिपेंडेंसी इंस्टॉल करें (अगर पहली बार चला रहे हैं):
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. FastAPI सर्वर रन करें:
-   ```bash
-   python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-   ```
-   - API बेस URL: `http://127.0.0.1:8000`
-   - Swagger इंटरएक्टिव डॉक्यूमेंटेशन: `http://127.0.0.1:8000/docs`
-   - हेल्थचेक: `http://127.0.0.1:8000/health`
+A comprehensive, production-grade guide for local development, automated testing, database migrations, and cloud deployments (Vercel + Render).
 
 ---
 
-### B. फ्रंटएंड चलाना (Next.js 16 + React + TypeScript)
-1. वेब डायरेक्टरी में जाएं और पैकेज इंस्टॉल करें (अगर पहली बार चला रहे हैं):
-   ```bash
-   cd web
-   npm install
-   ```
-2. डेवलपमेंट सर्वर शुरू करें:
-   ```bash
-   npm run dev
-   ```
-   - डैशबोर्ड URL: `http://localhost:3000`
+## 1. Quick Reference Sheet
 
-3. प्रोडक्शन बिल्ड चेक करें:
-   ```bash
-   npm run build
-   ```
+| Task | Command | Description |
+|---|---|---|
+| **Start Backend (Local)** | `python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload` | Runs FastAPI server at `http://127.0.0.1:8000` |
+| **Start Frontend (Local)** | `cd web && npm run dev` | Runs Next.js 16 UI at `http://localhost:3000` |
+| **One-Click Run (Windows)** | `.\start_all.bat` | Launches both servers in dedicated terminal windows |
+| **Run Pytest Suite** | `pytest -v` | Runs unit & integration test suite |
+| **Run Offline Verifier** | `python -c "import sys; sys.path.insert(0, '.'); import tests.run_offline_verification as r; r.run_all_offline_tests()"` | Validates SLA scan math, draft generation, and approval |
+| **Docker Build & Run** | `docker compose up --build -d` | Launches containerized environment |
+| **Database Migration** | `python migrate_uploaded_files.py` | Migrates SQLite tables (`uploaded_files`, raw text storage) |
 
 ---
 
-### C. एक क्लिक में दोनों सर्वर चलाना (Windows One-Click)
-रूट डायरेक्टरी में मौजूद बैच फाइल पर डबल-क्लिक करें:
-```cmd
-start_all.bat
-```
+## 2. Local Environment Setup
 
----
+### 2.1. Prerequisites
+- **Python:** 3.11+ or 3.14+
+- **Node.js:** 18+ or 20+ (with `npm`)
+- **Git**
 
-### D. ऑटोमेटेड टेस्ट चलाना (Run Tests)
-```bash
-# सभी Pytest यूनिट और इंटीग्रेशन टेस्ट
-pytest -v
-
-# डायरेक्ट ऑफलाइन एंड-टू-एंड वेरिफिकेशन
-python -c "import sys; sys.path.insert(0, '.'); import tests.run_offline_verification as r; r.run_all_offline_tests()"
-```
-
----
-
-## 2. Docker / कंटेनर से चलाना (Containerized Run)
-
-अगर आपके सिस्टम में Docker इंस्टॉल है:
-```bash
-# बैकएंड कंटेनर बिल्ड और रन करें
-docker compose up --build -d
-
-# लॉग्स देखें
-docker compose logs -f
-
-# बंद करने के लिए
-docker compose down
-```
-
----
-
-## 3. इसको कहाँ और कैसे डिप्लॉय कर सकते हैं? (Cloud Deployment Options)
-
-यह प्रोजेक्ट आधुनिक 2-टियर आर्किटेक्चर (Next.js Frontend + Python FastAPI Backend) पर बना है। इसे आप निम्नलिखित प्लेटफॉर्म्स पर आसानी से डिप्लॉय कर सकते हैं:
-
-### विकल्प 1: Vercel + Render / Railway (सबसे आसान और मुफ़्त/सस्ता तरीका - Recommended)
-1. Frontend (Vercel):
-   - [Vercel](https://vercel.com/) पर अपना GitHub रिपॉजिटरी कनेक्ट करें।
-   - Root Directory: `web` सेट करें।
-   - Build Command: `npm run build`
-   - Output Directory: `.next`
-   - Environment Variable:
-     `NEXT_PUBLIC_API_BASE_URL=https://your-backend-url.onrender.com`
-
-2. Backend (Render या Railway):
-   - [Render](https://render.com/) पर "New Web Service" बनाएं।
-   - अपना GitHub रिपॉजिटरी चुनें।
-   - Environment: `Python 3`
-   - Build Command: `pip install -r requirements.txt`
-   - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - Environment Variables:
-     - `STALL_ALERTER_API_KEY=your-secure-random-32char-key`
-     - `DATABASE_PATH=stall_alerter.db` (या PostgreSQL URL)
-
----
-
-### विकल्प 2: AWS / DigitalOcean / Linode (Single VPS via Docker)
-1. VPS में SSH लॉग इन करें और Git रिपॉजिटरी क्लोन करें:
+### 2.2. Backend Setup
+1. Clone repository and install Python packages:
    ```bash
    git clone https://github.com/ajayroll1/Stall_Alert.git
    cd Stall_Alert
+   pip install -r requirements.txt
    ```
-2. Docker Compose से बैकएंड चलाएं:
+2. Configure `.env` file (copy from `.env.example`):
    ```bash
-   docker compose up -d
+   cp .env.example .env
    ```
-3. Nginx को रिवर्स प्रॉक्सी के रूप में कॉन्फ़िगर करें जो SSL (Let's Encrypt / Certbot) के साथ पोर्ट 80/443 को 8000 और 3000 पर रूट करे।
+3. Start the FastAPI development server:
+   ```powershell
+   python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+   ```
+   - OpenAPI Docs: `http://127.0.0.1:8000/docs`
+   - Healthcheck: `http://127.0.0.1:8000/health`
+
+### 2.3. Frontend Setup
+1. Enter `web/` directory and install dependencies:
+   ```powershell
+   cd web
+   npm install
+   ```
+2. Verify or create `web/.env.local`:
+   ```env
+   NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+   NEXT_PUBLIC_API_KEY=dev-stall-alerter-secret-key-32chars-min
+   ```
+3. Start Next.js development server:
+   ```powershell
+   npm run dev
+   ```
+   - Ops Console: `http://localhost:3000/dashboard`
 
 ---
 
-## 4. प्रोजेक्ट स्ट्रक्चर का प्रोडक्शन ऑडिट (Production-Grade Audit)
+## 3. Testing & Automated Verification
 
+### 3.1. Pytest Test Suite
+```bash
+pytest -v
 ```
-Stall_Alert/
-├── app/                  # [Backend] FastAPI, रूटर्स, डेटाबेस कनेक्शन, डोमेन लॉजिक
-│   ├── __init__.py
-│   └── main.py           # कोर API एंडपॉइंट्स, SLA रूल्स, सैनिटाइजेशन और ऑडिट लॉग्स
-├── docs/                 # [Enterprise Docs] आर्किटेक्चर, सिक्योरिटी, API और थ्रेट मॉडल
-│   ├── AI_GUARDRAILS.md
-│   ├── API.md
-│   ├── ARCHITECTURE.md
-│   ├── AUDIT_REPORT.md
-│   ├── DEPLOYMENT.md
-│   ├── IMPLEMENTATION_PLAN.md
-│   ├── SECURITY.md
-│   └── TECH_STACK.md
-├── examples/             # टेस्ट डेटा (candidates.csv)
-├── frontend/             # लाइटवेट स्टैंडअलोन HTML/JS कंसोल
-├── tests/                # ऑटोमेटेड टेस्ट सूट (Pytest + Offline Verifier)
-│   ├── test_logic.py
-│   └── run_offline_verification.py
-├── web/                  # [Frontend] Next.js 16 + React 19 + TypeScript + Tailwind
-│   ├── src/
-│   │   ├── app/          # App Router (page.tsx, layout.tsx, globals.css)
-│   │   ├── components/   # Reusable UI (Tour, Footer, Modals)
-│   │   ├── api.ts        # Typed API क्लाइंट
-│   │   └── types.ts      # TypeScript इंटरफेस
-│   ├── package.json
-│   └── tsconfig.json
-├── .env.example          # पर्यावरण चर टेम्पलेट
-├── .gitignore            # गिट अनदेखी सूची
-├── docker-compose.yml    # प्रोडक्शन कंपोज़ कॉन्फ़िगरेशन
-├── Dockerfile            # बैकएंड डॉकर कंटेनर फ़ाइल
-├── MARK.md               # फीचर पूर्णता चेकलिस्ट (Verified)
-├── COMMAND.md            # रन और डिप्लॉयमेंट कमांड्स
-└── README.md             # प्रोजेक्ट ओवरव्यू और क्विक-स्टार्ट
+Validates:
+- CSV row parsing and field sanitization (CSV formula injection defense)
+- SLA scanner breach detection (Medium $\ge 1.0\times$, High $\ge 1.5\times$, Critical $\ge 2.0\times$)
+- Approval state transitions (`draft` $\rightarrow$ `approved` / `rejected`)
+- File ingestion history endpoints (`/api/files`)
+
+### 3.2. Manual E2E Smoke Test
+Upload test data file via cURL:
+```bash
+curl -X POST "http://127.0.0.1:8000/api/candidates/import" \
+  -H "X-API-Key: dev-stall-alerter-secret-key-32chars-min" \
+  -F "file=@examples/candidates.csv"
+```
+Trigger deterministic scan:
+```bash
+curl -X POST "http://127.0.0.1:8000/api/alerts/scan" \
+  -H "X-API-Key: dev-stall-alerter-secret-key-32chars-min"
 ```
 
-### स्ट्रक्चर पर समीक्षा (Verdict):
-- मॉड्यूलर सेपरेशन: बैकएंड (`app/`), फ्रंटेंड (`web/`), टेस्ट्स (`tests/`), और डॉक्यूमेंटेशन (`docs/`) स्पष्ट रूप से अलग-अलग हैं।
-- सुरक्षा और स्वच्छता: कोई सीक्रेट्स या हार्डकोडेड टोकन्स कमिट नहीं हैं, `.gitignore` ठीक से कॉन्फ़िगर है।
-- कंटेनराइजेशन: `Dockerfile` और `docker-compose.yml` पहले से मौजूद हैं।
-- निष्कर्ष: यह फ़ोल्डर स्ट्रक्चर पूरी तरह इंडस्ट्री-स्टैंडर्ड और प्रोडक्शन-ग्रेड है।
+---
+
+## 4. Production Cloud Deployment
+
+### 4.1. Live Environments
+- **Frontend (Vercel):** [https://stall-alert.vercel.app](https://stall-alert.vercel.app)
+- **Backend (Render):** [https://stall-alert.onrender.com](https://stall-alert.onrender.com)
+
+### 4.2. Deploying Backend to Render
+1. Create a **New Web Service** connected to `ajayroll1/Stall_Alert`.
+2. Configure settings:
+   - **Environment:** `Python 3`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+3. Configure Environment Variables in Render:
+   - `API_KEY`: Production 32+ character key
+   - `SMTP_HOST`: `smtp.gmail.com`
+   - `SMTP_PORT`: `587`
+   - `SMTP_USER`: `ajaymahto2580@gmail.com`
+   - `SMTP_PASSWORD`: `<App_Password>`
+   - `SENDER_EMAIL`: `ajaymahto2580@gmail.com`
+
+### 4.3. Deploying Frontend to Vercel
+1. Import repository in [Vercel](https://vercel.com).
+2. Set **Root Directory** to `web`.
+3. Set **Framework Preset** to `Next.js`.
+4. Configure Project Environment Variables:
+   - `NEXT_PUBLIC_API_URL`: `https://stall-alert.onrender.com`
+   - `NEXT_PUBLIC_API_KEY`: Matching production `API_KEY`
+5. Click **Deploy**.
+
+---
+
+## 5. Dockerized Deployment
+
+To run the entire stack on any Linux VPS (AWS, DigitalOcean, Hetzner):
+```bash
+# Clone repository
+git clone https://github.com/ajayroll1/Stall_Alert.git
+cd Stall_Alert
+
+# Build and start in background
+docker compose up --build -d
+
+# Check live logs
+docker compose logs -f
+
+# Stop containers
+docker compose down
+```
