@@ -11,7 +11,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app/ ./app/
-COPY frontend/ ./frontend/
 COPY examples/ ./examples/
 
 EXPOSE 8000
