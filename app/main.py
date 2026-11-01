@@ -459,8 +459,8 @@ async def import_candidates(file: UploadFile = File(...), _: str = Depends(verif
         success_count += 1
 
     file_id = str(uuid.uuid4())
-    file_size = len(contents)
-    file_text_content = content_str if file_size < 500000 else content_str[:500000] # store CSV text up to 500KB
+    file_size = len(content)
+    file_text_content = text if file_size < 500000 else text[:500000] # store CSV text up to 500KB
 
     conn.execute(
         """
