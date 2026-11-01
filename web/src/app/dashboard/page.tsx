@@ -81,6 +81,7 @@ export default function DashboardPage() {
   const [editedDraftText, setEditedDraftText] = useState<string>("");
   const [approveNextStage, setApproveNextStage] = useState<string>("");
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
+  const [isSubmittingApproval, setIsSubmittingApproval] = useState<boolean>(false);
 
   // Rules
   const [rules, setRules] = useState<SLARule[]>([]);
@@ -194,27 +195,46 @@ export default function DashboardPage() {
   };
 
   const handleApproveReject = async (decision: "approved" | "rejected") => {
-    if (!reviewModalAction) return;
+    if (!reviewModalAction || isSubmittingApproval) return;
+    setIsSubmittingApproval(true);
+
+    const targetActionId = reviewModalAction.id;
+    const finalDraft = editedDraftText;
+    const nextStageTarget = approveNextStage;
+
+    // Optimistically close modal immediately on click so user gets instant 1-click feedback
+    setReviewModalAction(null);
+    setApproveNextStage("");
+
+    showToast(
+      decision === "approved"
+        ? (nextStageTarget
+            ? `Dispatching email & advancing candidate to '${nextStageTarget}'...`
+            : "Dispatching approved follow-up email...")
+        : "Processing rejection status update..."
+    );
+
     try {
       await submitApprovalDecision(
-        reviewModalAction.id,
+        targetActionId,
         decision,
         "TalentLead",
-        editedDraftText,
-        approveNextStage || undefined
+        finalDraft,
+        nextStageTarget || undefined
       );
       showToast(
         decision === "approved"
-          ? (approveNextStage
-              ? `Draft approved, email sent & candidate advanced to '${approveNextStage}' (timer reset)!`
-              : "Draft approved & email successfully dispatched to candidate!")
-          : "Candidate status updated to rejected & courtesy email dispatched."
+          ? (nextStageTarget
+              ? `✅ Email dispatched & candidate advanced to '${nextStageTarget}' (Idle timer reset to 0.0d)!`
+              : "✅ Draft approved & email successfully delivered to candidate!")
+          : "Candidate status updated to rejected & courtesy notice recorded."
       );
-      setReviewModalAction(null);
-      setApproveNextStage("");
       await refreshAll();
     } catch (err: any) {
       showToast(`Action failed: ${err.message || "Unknown error"}`);
+      await refreshAll();
+    } finally {
+      setIsSubmittingApproval(false);
     }
   };
 
@@ -1643,8 +1663,20 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-danger" onClick={() => handleApproveReject("rejected")}>Reject Draft</button>
-              <button className="btn btn-primary" onClick={() => handleApproveReject("approved")}>Approve Message</button>
+              <button
+                className="btn btn-danger"
+                disabled={isSubmittingApproval}
+                onClick={() => handleApproveReject("rejected")}
+              >
+                Reject Draft
+              </button>
+              <button
+                className="btn btn-primary"
+                disabled={isSubmittingApproval}
+                onClick={() => handleApproveReject("approved")}
+              >
+                {isSubmittingApproval ? "Approving..." : "Approve Message"}
+              </button>
             </div>
           </div>
         </div>
