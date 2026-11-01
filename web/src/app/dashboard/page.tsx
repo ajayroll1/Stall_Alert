@@ -335,12 +335,18 @@ export default function DashboardPage() {
     try {
       const res = await uploadCandidatesCsv(selectedFile);
       setImportStatus(`Success! Imported ${res.imported_rows} rows (${res.error_count} errors)`);
-      showToast(`Imported ${res.imported_rows} candidates`);
+      showToast(`✨ CSV Ingestion Complete: Imported ${res.imported_rows} candidates (${res.error_count} errors)`);
       await refreshAll();
       await handleScan();
+      // Auto-close import modal after brief visual confirmation
+      setTimeout(() => {
+        setShowImportModal(false);
+        setImportStatus(null);
+        setSelectedFile(null);
+      }, 1200);
     } catch (err: any) {
       setImportStatus(`Failed: ${err.message}`);
-      showToast("Upload failed");
+      showToast(`Upload failed: ${err.message}`);
     } finally {
       setIsImporting(false);
     }
@@ -1320,8 +1326,25 @@ export default function DashboardPage() {
                 />
               </div>
               {importStatus && (
-                <div style={{ padding: "0.75rem", background: "var(--bg-surface-subtle)", borderRadius: "var(--radius-sm)", fontSize: "0.85rem" }}>
-                  {importStatus}
+                <div
+                  className={`ribbon-banner ${importStatus.startsWith("Success") ? "ribbon-success" : "ribbon-danger"}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.6rem",
+                    padding: "0.85rem 1rem",
+                    borderRadius: "var(--radius-md, 6px)",
+                    fontSize: "0.85rem",
+                    fontWeight: 500,
+                    animation: "fadeIn 0.25s ease",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.04)"
+                  }}
+                >
+                  <span style={{ fontSize: "1.1rem" }}>{importStatus.startsWith("Success") ? "✅" : "⚠️"}</span>
+                  <div style={{ flex: 1 }}>{importStatus}</div>
+                  {importStatus.startsWith("Success") && (
+                    <small style={{ color: "var(--medium-text)", fontWeight: 600, opacity: 0.85 }}>Auto-closing...</small>
+                  )}
                 </div>
               )}
             </div>
@@ -1499,12 +1522,12 @@ export default function DashboardPage() {
       {/* Fluid Antigravity Dynamic Footer */}
       <FluidFooter appName="Stall Alerter" tagline="Production Hiring Pipeline Monitoring & Recruiter Decision Support" />
 
-      {/* Toast Notification Container */}
+      {/* Toast Notification Container with Ribbon Banner Style */}
       <div className="toast-container">
         {toasts.map((t) => (
-          <div key={t.id} className="toast">
-            <span>●</span>
-            <span>{t.message}</span>
+          <div key={t.id} className="toast ribbon-toast">
+            <span className="ribbon-toast-badge">●</span>
+            <span className="ribbon-toast-text">{t.message}</span>
           </div>
         ))}
       </div>
